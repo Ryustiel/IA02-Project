@@ -6,6 +6,10 @@ import hitman.hitman as hitman
 
 MAX_SIZE = 10
 
+def get_random_maze(size: int, smaller: bool): # imported from augustin
+    # smaller=True makes the maze randomly smaller than the provided size
+    ...
+
 class MazeRep(hitman.HitmanReferee):
     """
     Un conteneur pour matrice d'objets labyrinthe
@@ -18,15 +22,18 @@ class MazeRep(hitman.HitmanReferee):
     de lancer l'inférence SAT,
     et de mettre à jour le labyrinthe avec les différentes sources
     """
-    def __init__(self, grid: List[List[hitman.HC]], wall_value: int, size: int, max_size = MAX_SIZE):
-        # Get the current maze dimensions
-        grid = np.array(grid)
-        current_height, current_width = grid.shape
-
-        # Pad the maze with the specified padding value
-        self.grid = np.pad(grid, ((0, max_size), (0, max_size)), constant_values=wall_value)
+    def __init__(self, grid: List[List[hitman.HC]]=None, size: int=0, max_size = MAX_SIZE, wall_value=hitman.HC.WALL):
         self.max_size = max_size
-        self.size = size
+        if grid is None:
+            self.grid, self.size = get_random_maze(size=MAX_SIZE, smaller=True)
+        else:
+            # Get the current maze dimensions
+            grid = np.array(grid)
+            current_height, current_width = grid.shape
+
+            # Pad the maze with the specified padding value
+            self.grid = np.pad(grid, ((0, max_size), (0, max_size)), constant_values=wall_value)
+            self.size = size
 
         super().__init__(grid)
 
@@ -47,22 +54,17 @@ class MazeRep(hitman.HitmanReferee):
         # gets the result grid and pretty prints
         ...
 
-def get_random_training_maze():
-    """
-    generates a random training maze
-    as an integer matrix
-    """
-    ...
+    def set_random_training_maze(self):
+        """
+        generates a random training maze
+        as an integer matrix
+        """
+        ...
 
-def evaluate_score(): # -> (isWon[bool], score[int]=None)
-    ...
-    # échec = 2 * 5 * grid_size squared
-
-def is_goal_state():
-    ...
-
-def update_maze_state():
-    ...
+    def evaluate_score(self, net): # -> (isWon[bool], score[int]=None)
+        ...
+        # net is a randomly generated net that should be able to play the game
+        # échec = 2 * 5 * grid_size squared
 
 
 init_grid = [
