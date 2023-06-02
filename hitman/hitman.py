@@ -135,14 +135,11 @@ complete_map_example = {
 
 
 class HitmanReferee:
-    def __init__(self, filename: str = ""):
-        self.__filename = filename
-        if filename == "":
-            self.__world = world_example
-            self.__m = len(self.__world)
-            self.__n = len(self.__world[0])
-        else:
-            raise NotImplementedError("TODO")
+    def __init__(self, world=world_example):
+        self.__filename = ""
+        self.__world = world
+        self.__m = len(self.__world)
+        self.__n = len(self.__world[0])
 
         self.__civil_count = self.__compute_civil_count()
         self.__guard_count = self.__compute_guard_count()
@@ -155,6 +152,14 @@ class HitmanReferee:
         self.__orientation = HC.N
         self.__is_in_guard_range = False
         self.__history: List[str] = []
+
+    def get_pos(self):
+        # CUSTOM TRAINING METHOD
+        return self.__pos
+    
+    def penalize(self):
+        # CUSTOM TRAINING METHOD
+        self.__phase1_penalties -= 1
 
     def start_phase1(self):
         self.__phase = 1
