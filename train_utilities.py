@@ -24,6 +24,11 @@ class MazeRep(hitman.HitmanReferee):
     """
     def __init__(self, grid: List[List[hitman.HC]]=None, size: int=0, max_size = MAX_SIZE, wall_value=hitman.HC.WALL):
         self.max_size = max_size
+
+        # faire la différence entre la vraie grille, 
+        # la grille des indices (avec des murs fixés sur les zones hors jeu)
+        # et la grille à passer à l'IA (grille à indices avec les bords)
+
         if grid is None:
             self.grid, self.size = get_random_maze(size=MAX_SIZE, smaller=True)
         else:
@@ -37,7 +42,7 @@ class MazeRep(hitman.HitmanReferee):
 
         super().__init__(grid)
 
-    def toINT(self) -> List[List[int]]:
+    def toINT(self) -> List[List[int]]: 
         # -> numpy array
         f = np.vectorize(lambda x: x.value)
         int_grid = f(self.getGrid())
