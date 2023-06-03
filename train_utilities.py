@@ -1,14 +1,11 @@
 from typing import List
 import numpy as np
 import hitman.hitman as hitman
+from generateur import get_random_maze, affichage
 
 # CONSTANTS
 
 MAX_SIZE = 10
-
-def get_random_maze(size: int, smaller: bool): # imported from augustin
-    # smaller=True makes the maze randomly smaller than the provided size
-    ...
 
 class MazeRep(hitman.HitmanReferee):
     """
@@ -22,7 +19,7 @@ class MazeRep(hitman.HitmanReferee):
     de lancer l'inférence SAT,
     et de mettre à jour le labyrinthe avec les différentes sources
     """
-    def __init__(self, grid: List[List[hitman.HC]]=None, size: int=0, max_size = MAX_SIZE, wall_value=hitman.HC.WALL):
+    def __init__(self, grid: List[List[hitman.HC]]=None, max_size = MAX_SIZE, wall_value=hitman.HC.WALL):
         self.max_size = max_size
 
         # faire la différence entre la vraie grille, 
@@ -30,23 +27,28 @@ class MazeRep(hitman.HitmanReferee):
         # et la grille à passer à l'IA (grille à indices avec les bords)
 
         if grid is None:
-            self.grid, self.size = get_random_maze(size=MAX_SIZE, smaller=True)
+            grid, self.width, self.height, new_pos = get_random_maze(max_size=MAX_SIZE)
+            self.set_pos(new_pos)
         else:
             # Get the current maze dimensions
             grid = np.array(grid)
             current_height, current_width = grid.shape
 
-            # Pad the maze with the specified padding value
-            self.grid = np.pad(grid, ((0, max_size), (0, max_size)), constant_values=wall_value)
-            self.size = size
+            self.width = current_width
+            self.height = current_height
 
-        super().__init__(grid)
+        # Pad the maze with the specified padding value
+        self.grid = np.pad(grid, ((0, max_size), (0, max_size)), constant_values=wall_value)
+
+        super().__init__(self.grid)
 
     def toINT(self) -> List[List[int]]: 
         # -> numpy array
-        f = np.vectorize(lambda x: x.value)
+        print("test")
+        print(self.grid)
+        f = np.vectorize(lambda x: x.value + 1)
         int_grid = f(self.getGrid())
-        int_grid[self.get_pos()] = 0
+        int_grid[self.get_pos()] = 1
         return int_grid
 
     def getResult(self):
@@ -77,9 +79,8 @@ init_grid = [
     [hitman.HC.EMPTY, hitman.HC.WALL, hitman.HC.EMPTY],
     [hitman.HC.EMPTY, hitman.HC.WALL, hitman.HC.WALL]
 ]
-m = MazeRep(init_grid, wall_value=hitman.HC.WALL, size=3)
-
-print("hi")
+m = MazeRep(init_grid, wall_value=hitman.HC.WALL)
+m = MazeRep()
 
 print(m.toINT(), end="\n\n")
 # print(m.getGrid(), end="\n\n")

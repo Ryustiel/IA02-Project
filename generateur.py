@@ -1,5 +1,7 @@
 import random, copy
 from enum import Enum
+from hitman.hitman import HC
+import numpy as np
 
 '''
 HC.WALL or | = mur 
@@ -21,27 +23,6 @@ D = deguisement
 & = depart
 
 '''
-
-class HC(Enum):
-    EMPTY = 1
-    WALL = 2
-    GUARD_N = 3
-    GUARD_E = 4
-    GUARD_S = 5
-    GUARD_W = 6
-    CIVIL_N = 7
-    CIVIL_E = 8
-    CIVIL_S = 9
-    CIVIL_W = 10
-    TARGET = 11
-    SUIT = 12
-    PIANO_WIRE = 13
-    N = 14
-    E = 15
-    S = 16
-    W = 17
-    BEGIN = 18
-
 
 import random
 
@@ -79,12 +60,12 @@ def affichage(grille):
                 affic[i][j]='&'
     return affic
 
-def generer():
+def get_random_maze(max_size: int):
     valide=False
     while valide==False:
             # Dimensions du labyrinthe
-        largeur = random.randint(7, 15)
-        hauteur = random.randint(7, 15)
+        largeur = random.randint(4, max_size)
+        hauteur = random.randint(4, max_size)
         probaMur=random.uniform(1/2,1/5)
         probaGarde = random.uniform(1/20,2/25)
         probaCivil = random.uniform(1/15,2/20) 
@@ -165,7 +146,7 @@ def generer():
         while grille[Dep[0]][Dep[1]] != HC.EMPTY:
             Dep=(random.randint(1,largeur-2),random.randint(1,hauteur-2))
         
-        grille[Dep[0]][Dep[1]]=HC.BEGIN
+        grille[Dep[0]][Dep[1]]=HC.EMPTY
         
         
         verify=copy.deepcopy(grille)
@@ -179,22 +160,26 @@ def generer():
                     if verify[i][j]==HC.EMPTY and init==False:
                         verify[i][j]=','
                         init=True
-                    if init==True and (verify[i][j] == HC.EMPTY or verify[i][j]==HC.BEGIN or verify[i][j] == HC.TARGET or verify[i][j] == HC.CIVIL_N or verify[i][j] == HC.CIVIL_S or verify[i][j] == HC.CIVIL_E or verify[i][j] == HC.CIVIL_W or verify[i][j] == HC.SUIT or verify[i][j]==HC.PIANO_WIRE) and (verify[i-1][j]==',' or verify[i+1][j]==',' or verify[i][j-1]==',' or verify[i][j+1]==','):
+                    if init==True and (verify[i][j] == HC.EMPTY or verify[i][j] == HC.TARGET or verify[i][j] == HC.CIVIL_N or verify[i][j] == HC.CIVIL_S or verify[i][j] == HC.CIVIL_E or verify[i][j] == HC.CIVIL_W or verify[i][j] == HC.SUIT or verify[i][j]==HC.PIANO_WIRE) and (verify[i-1][j]==',' or verify[i+1][j]==',' or verify[i][j-1]==',' or verify[i][j+1]==','):
                         verify[i][j]=','
                         nbModif+=1
         valide=True
         
         for i in range (1, largeur-1):
             for j in range (1,hauteur-1):
-                if verify[i][j] == HC.EMPTY or verify[i][j]==HC.BEGIN or verify[i][j] == HC.TARGET or verify[i][j] == HC.CIVIL_N or verify[i][j] == HC.CIVIL_S or verify[i][j] == HC.CIVIL_E or verify[i][j] == HC.CIVIL_W or verify[i][j] == HC.SUIT or verify[i][j]==HC.PIANO_WIRE:
+                if verify[i][j] == HC.EMPTY or verify[i][j] == HC.TARGET or verify[i][j] == HC.CIVIL_N or verify[i][j] == HC.CIVIL_S or verify[i][j] == HC.CIVIL_E or verify[i][j] == HC.CIVIL_W or verify[i][j] == HC.SUIT or verify[i][j]==HC.PIANO_WIRE:
                     valide=False
-    return grille
+
+    # converting to numpy format for convenience
+    grille = np.array(grille)
+    return grille[1:largeur-1, 1:hauteur-1], largeur-2, hauteur-2, Dep
 
 
 
 
 # Afficher la grille
-grille=generer()
-affic=affichage(grille)
-for ligne in affic:
-    print(' '.join(ligne))
+# grille, size_x, size_y = get_random_maze(10)
+# print(size_x, size_y)
+# affic = affichage(grille)
+# for ligne in affic:
+    # print(' '.join(ligne))
