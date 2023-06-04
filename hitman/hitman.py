@@ -133,11 +133,19 @@ complete_map_example = {
     (6, 0): HC.EMPTY,
 }
 
+import numpy as np
 
 class HitmanReferee:
-    def __init__(self, world=world_example):
+    def __init__(self, world):
         self.__filename = ""
         self.__world = world
+
+        # DEBUG PRINTING
+        print(world)
+        world = np.array(self.__world)
+        f = np.vectorize(lambda x: x.value)
+        print("WORLD", f(world), "\nWORLD")
+
         self.__m = len(self.__world)
         self.__n = len(self.__world[0])
 
@@ -148,18 +156,10 @@ class HitmanReferee:
         self.__phase = 0
         self.__phase1_penalties = 0
         self.__phase2_penalties = 0
-        self.__pos = (0, 0)
+        self._pos = (0, 0)
         self.__orientation = HC.N
         self.__is_in_guard_range = False
         self.__history: List[str] = []
-
-    def get_pos(self):
-        # CUSTOM TRAINING METHOD
-        return self.__pos
-    
-    def penalize(self):
-        # CUSTOM TRAINING METHOD
-        self.__phase1_penalties -= 1
 
     def start_phase1(self):
         self.__phase = 1
@@ -173,7 +173,7 @@ class HitmanReferee:
             "civil_count": self.__civil_count,
             "m": self.__m,
             "n": self.__n,
-            "position": self.__pos,
+            "position": self._pos,
             "orientation": self.__orientation,
             "vision": self.__get_vision(),
             "hear": self.__get_listening(),
@@ -189,7 +189,7 @@ class HitmanReferee:
         count = 0
         possible_offset = range(-dist, dist + 1)
         offsets = product(possible_offset, repeat=2)
-        x, y = self.__pos
+        x, y = self._pos
         for i, j in offsets:
             pos_x, pos_y = x + i, y + j
             if pos_x >= self.__n or pos_y >= self.__m or pos_x < 0 or pos_y < 0:
@@ -224,7 +224,7 @@ class HitmanReferee:
 
     def __get_vision(self, dist=3):
         offset_x, offset_y = self.__get_offset()
-        pos = self.__pos
+        pos = self._pos
         x, y = pos
         vision = []
         for _ in range(0, dist):
@@ -239,7 +239,7 @@ class HitmanReferee:
 
     def move(self):
         offset_x, offset_y = self.__get_offset()
-        x, y = self.__pos
+        x, y = self._pos
 
         self.__phase1_penalties += 1
 
@@ -256,7 +256,7 @@ class HitmanReferee:
             self.__phase1_penalties += 5 * self.__seen_by_guard_num()
             return self.__get_status_phase_1("Err: invalid move")
 
-        self.__pos = x + offset_x, y + offset_y
+        self._pos = x + offset_x, y + offset_y
         self.__phase1_penalties += 5 * self.__seen_by_guard_num()
 
         return self.__get_status_phase_1()
@@ -382,7 +382,7 @@ class HitmanReferee:
 
     def __seen_by_civil_num(self) -> int:
         count = 0
-        x, y = self.__pos
+        x, y = self._pos
         for civil in self.__civils.keys():
             count += (
                 1
@@ -440,7 +440,7 @@ class HitmanReferee:
 
     def __seen_by_guard_num(self) -> int:
         count = 0
-        x, y = self.__pos
+        x, y = self._pos
         if self.__get_world_content(x, y) not in [
             HC.CIVIL_N,
             HC.CIVIL_E,

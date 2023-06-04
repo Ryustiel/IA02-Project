@@ -1,9 +1,9 @@
-from hitman.hitman import HC, HitmanReferee, complete_map_example
+from hitman.hitman import HC, HitmanReferee, complete_map_example, world_example
 from pprint import pprint
 
 
 def main():
-    hr = HitmanReferee()
+    hr = HitmanReferee(world_example)
     status = hr.start_phase1()
     pprint(status)
     status = hr.turn_clockwise()

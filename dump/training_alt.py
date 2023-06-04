@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Input, Conv2D, Flatten, LSTM, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 
-from train_utilities import get_random_training_maze, evaluate_score, is_goal_state, update_maze_state
+from dump.train_utilities_old import get_random_training_maze, evaluate_score, is_goal_state, update_maze_state
 
 # CONSTANTS
 maze_height = 4

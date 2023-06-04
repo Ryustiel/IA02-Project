@@ -1,5 +1,5 @@
 import neat
-from train_utilities import MazeRep
+from dump.train_utilities_old import MazeRep
 
 config_path = "path/to/your/config-file"
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,

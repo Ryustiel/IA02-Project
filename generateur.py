@@ -64,8 +64,8 @@ def get_random_maze(max_size: int):
     valide=False
     while valide==False:
             # Dimensions du labyrinthe
-        largeur = random.randint(4, max_size)
-        hauteur = random.randint(4, max_size)
+        largeur = random.randint(6, max_size)
+        hauteur = random.randint(6, max_size)
         probaMur=random.uniform(1/2,1/5)
         probaGarde = random.uniform(1/20,2/25)
         probaCivil = random.uniform(1/15,2/20) 
@@ -172,7 +172,7 @@ def get_random_maze(max_size: int):
 
     # converting to numpy format for convenience
     grille = np.array(grille)
-    return grille[1:largeur-1, 1:hauteur-1], largeur-2, hauteur-2, Dep
+    return grille[1:largeur-1, 1:hauteur-1], largeur-2, hauteur-2, (Dep[0] - 1, Dep[1] - 1)
 
 
 
