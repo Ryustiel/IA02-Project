@@ -1,5 +1,6 @@
 import neat
-from dump.train_utilities_old import MazeRep
+from train_utilities import MazeRep, MAX_SIZE
+from generateur import get_random_maze
 
 config_path = "path/to/your/config-file"
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -7,6 +8,11 @@ config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
 
 # Define the fitness function
 def eval_genomes(genomes, config):
+    
+    # generates 1 random maze for testing
+    grid, starting = get_random_maze(max_size = MAX_SIZE)
+    
+    
     for genome_id, genome in genomes:
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         genome.fitness = MAZE.evaluate_score(net)
@@ -20,8 +26,6 @@ population.add_reporter(stats)
 population.add_reporter(neat.Checkpointer(generation_interval=100))
 
 # Run the evolution
-
-MAZE = MazeRep()
 
 generations = 10  # Number of generations to evolve
 for _ in range(generations):

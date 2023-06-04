@@ -8,6 +8,8 @@ from enum import Enum
 
 MAX_SIZE = 10
 MAX_BITS = 5 # bits per cell for the encoding
+MAX_ITERATION = 20
+PENALTY_UNDISCOVERED = 10 # penalty when a tile has not been discovered
 
 class DHC(Enum): # elements for AI discovery
     # compter par l'arrière pour l'encodage binaire
@@ -18,7 +20,7 @@ class DHC(Enum): # elements for AI discovery
     HEAR_PERS_2 = 28
     HEAR_PERS_3 = 27
 
-class MazeRep(hitman.HitmanReferee):
+class MazeRep():
     """
     Un conteneur pour matrice d'objets labyrinthe
     Le met à jour automatiquement avec les données apportées par
@@ -32,83 +34,146 @@ class MazeRep(hitman.HitmanReferee):
     """
     def __init__(self, grid: List[List[hitman.HC]]=None, start_pos = (0, 0), max_size = MAX_SIZE):
         self.max_size = max_size
+        self.has_failed = False
+        self.penalties = 0
 
         # faire la différence entre la vraie grille, 
         # la grille des indices (avec des murs fixés sur les zones hors jeu)
         # et la grille à passer à l'IA (grille à indices avec les bords)
 
         if grid is None:
-            grid, self.width, self.height, new_pos = get_random_maze(max_size=MAX_SIZE)
-            super().__init__(world = grid)
-            self._pos = new_pos
+            self.grid, self.width, self.height, new_pos = get_random_maze(max_size=MAX_SIZE)
+            new_pos = self.grid_to_matrix(new_pos)
+            
+            self.referee = hitman.HitmanReferee(
+                world = self.grid, 
+                pos = new_pos
+                )
+            
+            self.pos = new_pos # STORED AS PROF FORMAT
         else:
             # Get the current maze dimensions
-            grid = np.array(grid)
-            current_height, current_width = grid.shape
+            self.grid = np.array(grid)
+            current_width, current_height = self.grid.shape
+            print(self.grid.shape)
 
             self.width = current_width
             self.height = current_height
 
-            super().__init__(world = grid)
-            self._pos = start_pos
+            self.referee = hitman.HitmanReferee(
+                world = self.grid, 
+                pos = start_pos
+                )
+            self.pos = start_pos # STORED AS PROF FORMAT
         
         self.discovered = np.full((self.width, self.height), DHC.UNKNOWN.value) # part de la grille découverte
 
-        # Pad the maze with the specified padding value
-        self.grid = np.pad(grid, ((0, max_size - self.width), (0, max_size - self.height)), constant_values=hitman.HC.WALL)
-        self.discovered = np.pad(
+        # self.grid is a record of the full maze state, for pretty printing
+        # self.grid = np.pad(grid, ((0, max_size - self.width), (0, max_size - self.height)), constant_values=hitman.HC.WALL)
+        
+        # Pad the maze with the specified padding value (walls)
+        # self.discovered is the internal, known state of the maze
+        self.discovered = np.pad( 
             self.discovered,
             ((0, max_size - self.width), (0, max_size - self.height)),
             constant_values = (hitman.HC.WALL.value)
             )
 
-        # self.discovered[self.get_pos()] = DHC.PLAYER.value
-
     def get_pos(self):
-        return self._pos
+        # returns the grid indice
+        return self.matrix_to_grid(self.pos)
+    
+    def matrix_to_grid(self, pos):
+        """
+        this exists because our teacher decided to 
+        index his arrays bottom to top
+        """
+        return self.width - 1 - pos[1], pos[0]
+    
+    def grid_to_matrix(self, indices):
+        return indices[1], self.width - 1 - indices[0]
+    
 
     def update_state(self, data: Dict):
         # mettre à jour le champ de vision par rapport à l'objet détecté en premier
         # vérifier si la pièce est fermée à tout moment
-        print(data['vision'])
+        print(data['vision'], "\n", data['position'], data['orientation'], data['penalties'])
+        self.penalties = int(data['penalties'])
         for pos, type in data['vision']:
-            self.discovered[pos] = type.value
+            self.discovered[self.matrix_to_grid(pos)] = type.value
+        self.pos = data['position']
+
+        if data['status'] != 'OK':
+            self.has_failed = True
+            print("HAS FAILED")
 
         
     def action_interface(self, code: int):
-        if code == 0:
-            status = self.turn_anti_clockwise()
-        elif code == 1:
-            status = self.turn_clockwise()
-        else:
-            status = self.move()
+        if not self.has_failed:
+            if code == 0:
+                status = self.referee.turn_anti_clockwise()
+            elif code == 1:
+                status = self.referee.turn_clockwise()
+            else:
+                status = self.referee.move()
 
-        self.update_state(status)
+            self.update_state(status)
 
     def check_enclosed_space(self):
         """
         vérifie si l'espace découvert est contigu, et transforme le reste en murs
+        => pour les salles bizarres
         """
         ...
 
-    def set_random_training_maze(self):
-        """
-        generates a random training maze
-        as an integer matrix
-        """
-        ...
 
-    def evaluate_score(self, net): # -> (isWon[bool], score[int]=None)
+
+    def get_penalty_for_missing(self):
+        missing = [30, 29, 28, 27, 26] # values that mean undiscovered
+        self.penalties += PENALTY_UNDISCOVERED * np.sum(np.isin(self.discovered, missing))
+        print("FOUND", np.sum(np.isin(self.discovered, missing)), "TOTAL", self.width * self.height)
+
+    def not_yet_complete(self) -> bool:
+        return np.any(np.isin(self.discovered, [30, 29, 28]))
+            
+
+
+    # MOST IMPORTANT METHOD =================================================================
+
+    def evaluate(self, net): # -> (isWon[bool], score[int]=None)
         # net is a randomly generated net that should be able to play the game
         # échec = 2 * 5 * grid_size squared
-        ...
+        # lorsqu'echec, -10 par case non découverte
+        
+        i = 0
+
+        while self.not_yet_complete():
+            input_data = self.getEncoding()
+            output = net.activate(input_data) # besoin que de 2 output
+
+            if output[0] > 0:
+                self.action_interface(0)
+            elif output[1] > 0:
+                self.action_interface(1)
+            else:
+                self.action_interface(2)
+
+            print(self)
+        
+            if i > MAX_ITERATION or self.has_failed:
+                self.get_penalty_for_missing()
+                break
+
+        return self.penalties
+
+
 
     def toINT(self) -> List[List[int]]: 
         # -> numpy array
         f = np.vectorize(lambda x: x.value)
         int_grid = f(self.getGrid())
         # int_grid[self.get_pos()] = DHC.PLAYER.value
-        return int_grid[0:self.width, 0:self.height]
+        return int_grid
     
     def getEncoding(self):
         max_bits = MAX_BITS
@@ -158,20 +223,3 @@ class MazeRep(hitman.HitmanReferee):
         s = str(self.discovered[0:self.width, 0:self.height])
         self.discovered[self.get_pos()] = player_pos_type # puts the original value back
         return s + "\n"
-
-
-init_grid = [
-    [hitman.HC.EMPTY, hitman.HC.EMPTY, hitman.HC.EMPTY],
-    [hitman.HC.EMPTY, hitman.HC.WALL, hitman.HC.EMPTY],
-    [hitman.HC.EMPTY, hitman.HC.WALL, hitman.HC.WALL]
-]
-m1 = MazeRep(init_grid, start_pos = (0, 0))
-m = MazeRep()
-
-print(m.toINT(), end="\n\n")
-print(m)
-m.action_interface(1)
-print(m)
-m.action_interface(1)
-print(m)
-# print(m.getGrid(), end="\n\n")
