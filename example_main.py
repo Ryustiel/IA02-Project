@@ -1,12 +1,12 @@
 from hitman.hitman import HC, HitmanReferee, complete_map_example, world_example
 from pprint import pprint
-from train_utilities import MazeRep
+from train_utilities import MazeRep, MAX_SIZE
 from generateur import get_random_maze
 
 def main():
     #m = MazeRep(world_example, start_pos = (0, 0))
 
-    grid, width, height, start_pos = get_random_maze(max_size=10)
+    grid, start_pos = get_random_maze(max_size=10)
 
     m = MazeRep(grid, start_pos)
 
@@ -37,6 +37,7 @@ def main():
 
     enc = m.getEncoding()
     print(len(enc)) # should be 5 * 
+
 
     #pprint(hr.send_content({(0, 0): HC.EMPTY}))
     #pprint(hr.send_content(complete_map_example))

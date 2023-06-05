@@ -42,28 +42,24 @@ class MazeRep():
         # et la grille à passer à l'IA (grille à indices avec les bords)
 
         if grid is None:
-            self.grid, self.width, self.height, new_pos = get_random_maze(max_size=MAX_SIZE)
-            new_pos = self.grid_to_matrix(new_pos)
-            
-            self.referee = hitman.HitmanReferee(
-                world = self.grid, 
-                pos = new_pos
-                )
+            self.grid, new_pos = get_random_maze(max_size=MAX_SIZE)
+            start_pos = self.grid_to_matrix(new_pos)
             
             self.pos = new_pos # STORED AS PROF FORMAT
         else:
             # Get the current maze dimensions
             self.grid = np.array(grid)
-            current_width, current_height = self.grid.shape
 
-            self.width = current_width
-            self.height = current_height
-
-            self.referee = hitman.HitmanReferee(
-                world = self.grid, 
-                pos = start_pos
-                )
             self.pos = start_pos # STORED AS PROF FORMAT
+
+        self.referee = hitman.HitmanReferee(
+                world = self.grid, 
+                pos = self.pos
+                )
+
+        current_width, current_height = self.grid.shape
+        self.width = current_width
+        self.height = current_height
         
         self.discovered = np.full((self.width, self.height), DHC.UNKNOWN.value) # part de la grille découverte
 
@@ -106,7 +102,6 @@ class MazeRep():
 
         if data['status'] != 'OK':
             self.has_failed = True
-            print("HAS FAILED")
 
         
     def action_interface(self, code: int):
@@ -132,7 +127,7 @@ class MazeRep():
     def get_penalty_for_missing(self):
         self.penalties += PENALTY_UNDISCOVERED * np.sum(self.discovered > 20) # values that mean undiscovered
         
-        print("FOUND", np.sum(self.discovered > 20), "TOTAL", self.width * self.height)
+        # print("FOUND", np.sum(self.discovered > 20), "TOTAL", self.width * self.height)
 
     def not_yet_complete(self) -> bool:
         return np.any(self.discovered > 20)
@@ -154,6 +149,8 @@ class MazeRep():
         while self.not_yet_complete():
             input_data = self.getEncoding()
             output = net.activate(input_data) # besoin que de 2 output
+
+            # print(output)
 
             if output[0] > 0:
                 self.action_interface(0)

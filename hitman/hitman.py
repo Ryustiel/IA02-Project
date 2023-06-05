@@ -179,6 +179,8 @@ class HitmanReferee:
 
     def __get_world_content(self, x: int, y: int):
         # provisoire
+        if x >= self.__n or y >= self.__m or x < 0 or y < 0:
+            raise ValueError("ERROR INSIDE GET WORLD CONTENT : BAD INDEX; DIMENTIONS = (", self.__n, self.__m, ") but got coords : ", x, y)
         return self.__world[self.__m - y - 1][x]
 
     def __get_listening(self, dist=2):
@@ -407,6 +409,7 @@ class HitmanReferee:
                     or c == HC.GUARD_W
                 ):
                     guard_x, guard_y = (c_index, self.__m - l_index - 1)
+
                     locations[(guard_x, guard_y)] = self.__get_guard_vision(
                         guard_x, guard_y
                     )
@@ -435,7 +438,8 @@ class HitmanReferee:
             x, y = pos
             if x >= self.__n or y >= self.__m or x < 0 or y < 0:
                 break
-            vision.append((pos, self.__get_world_content(x, y)))
+            else:
+                vision.append((pos, self.__get_world_content(x, y)))
             if vision[-1][1] != HC.EMPTY:
                 break
         return vision
@@ -443,6 +447,9 @@ class HitmanReferee:
     def __seen_by_guard_num(self) -> int:
         count = 0
         x, y = self.__pos
+        if x >= self.__n or y >= self.__m or x < 0 or y < 0:
+            return 0
+
         if self.__get_world_content(x, y) not in [
             HC.CIVIL_N,
             HC.CIVIL_E,

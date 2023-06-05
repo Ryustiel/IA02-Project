@@ -34,12 +34,7 @@ for i in range(generations):
     genomes = population.run(eval_genomes, 1)
 
     # Get the best genome from the current generation
-    best_genome = None
-    best_fitness = 0.0
-    for genome_id, genome in genomes:
-        if genome.fitness > best_fitness:
-            best_fitness = genome.fitness
-            best_genome = genome
+    best_genome = population.best_genome
 
     # Evaluate the best genome further if needed
     net = neat.nn.FeedForwardNetwork.create(best_genome, config)

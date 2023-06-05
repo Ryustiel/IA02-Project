@@ -172,7 +172,7 @@ def get_random_maze(max_size: int):
 
     # converting to numpy format for convenience
     grille = np.array(grille)
-    return grille[1:largeur-1, 1:hauteur-1], largeur-2, hauteur-2, (Dep[0] - 1, Dep[1] - 1)
+    return grille[1:largeur-1, 1:hauteur-1], (Dep[0] - 1, Dep[1] - 1)
 
 
 
