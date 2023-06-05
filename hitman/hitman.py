@@ -244,7 +244,6 @@ class HitmanReferee:
         # UPDATED FOR OUT OF BOUND ERRORS !
         if x + offset_x >= self.__n or x + offset_x < 0 or y + offset_y >= self.__m or y + offset_y < 0:
             self.__phase1_penalties += 5 * self.__seen_by_guard_num()
-            print("DETECTED OUT OF BOUNDS")
             return self.__get_status_phase_1("Err: invalid move")
 
         elif self.__get_world_content(x + offset_x, y + offset_y) not in [
@@ -447,6 +446,8 @@ class HitmanReferee:
     def __seen_by_guard_num(self) -> int:
         count = 0
         x, y = self.__pos
+        
+        # FIXED WRONG GUARD ID
         if x >= self.__n or y >= self.__m or x < 0 or y < 0:
             return 0
 

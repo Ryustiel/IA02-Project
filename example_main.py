@@ -31,13 +31,26 @@ def main():
                 self.state += 1
                 return self.actions[self.state - 1]
     
-    p = m.evaluate(Net())
-    print(p)
+    #p = m.evaluate(Net())
+    #print(p)
+    m.action_interface(1)
     print(m)
 
     enc = m.getEncoding()
+    print(enc)
     print(len(enc)) # should be 5 * 
 
+    o = """
+    best = (None, 0)
+    for _ in range(1): # 2000
+        grid, starting = get_random_maze(MAX_SIZE)
+        mze = MazeRep(grid, starting)
+        r = mze.evaluate(Net())
+        print(r)
+        if r > best[1]:
+            best = (mze, r)
+    print(best[0], best[1])
+    """
 
     #pprint(hr.send_content({(0, 0): HC.EMPTY}))
     #pprint(hr.send_content(complete_map_example))
