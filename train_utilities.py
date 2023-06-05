@@ -7,9 +7,9 @@ from enum import Enum
 # TRAINING CONSTANTS
 
 MAX_SIZE = 10
-MAX_BITS = 5 # bits per cell for the encoding
-MAX_ITERATION = 20
-PENALTY_UNDISCOVERED = 10 # penalty when a tile has not been discovered
+BITS_PER_CELL = 5 # bits per cell for the encoding
+MAX_ITERATION = 30
+PENALTY_UNDISCOVERED = 15 # penalty when a tile has not been discovered
 
 class DHC(Enum): # elements for AI discovery
     # compter par l'arrière pour l'encodage binaire
@@ -55,7 +55,6 @@ class MazeRep():
             # Get the current maze dimensions
             self.grid = np.array(grid)
             current_width, current_height = self.grid.shape
-            print(self.grid.shape)
 
             self.width = current_width
             self.height = current_height
@@ -97,7 +96,9 @@ class MazeRep():
     def update_state(self, data: Dict):
         # mettre à jour le champ de vision par rapport à l'objet détecté en premier
         # vérifier si la pièce est fermée à tout moment
-        print(data['vision'], "\n", data['position'], data['orientation'], data['penalties'])
+        
+        # print(data['vision'], "\n", data['position'], data['orientation'], data['penalties'])
+        
         self.penalties = int(data['penalties'])
         for pos, type in data['vision']:
             self.discovered[self.matrix_to_grid(pos)] = type.value
@@ -129,13 +130,16 @@ class MazeRep():
 
 
     def get_penalty_for_missing(self):
-        missing = [30, 29, 28, 27, 26] # values that mean undiscovered
-        self.penalties += PENALTY_UNDISCOVERED * np.sum(np.isin(self.discovered, missing))
-        print("FOUND", np.sum(np.isin(self.discovered, missing)), "TOTAL", self.width * self.height)
+        self.penalties += PENALTY_UNDISCOVERED * np.sum(self.discovered > 20) # values that mean undiscovered
+        
+        print("FOUND", np.sum(self.discovered > 20), "TOTAL", self.width * self.height)
 
     def not_yet_complete(self) -> bool:
-        return np.any(np.isin(self.discovered, [30, 29, 28]))
-            
+        return np.any(self.discovered > 20)
+    
+    def max_penalty(self):
+        # returns the maximum penalty value
+        return self.width * self.height * (PENALTY_UNDISCOVERED) # guards + moving 
 
 
     # MOST IMPORTANT METHOD =================================================================
@@ -158,13 +162,14 @@ class MazeRep():
             else:
                 self.action_interface(2)
 
-            print(self)
+            # print(self)
         
             if i > MAX_ITERATION or self.has_failed:
                 self.get_penalty_for_missing()
                 break
 
-        return self.penalties
+        bonus = self.max_penalty() - self.penalties
+        return 0 if bonus < 0 else bonus # ceiled to zero
 
 
 
@@ -176,31 +181,32 @@ class MazeRep():
         return int_grid
     
     def getEncoding(self):
-        max_bits = MAX_BITS
-        max_integer = 2**MAX_BITS - 1  # Number of possible object types (0 to 31 is the default)
+        max_integer = 2**BITS_PER_CELL - 1  # Number of possible object types (0 to 31 is the default)
         
         # Create an empty array with shape (grid_shape[0], grid_shape[1], num_objects)
-        encoded_array = np.empty(self.max_size**2 * max_bits + max_bits, dtype=int)
+        encoded_array = np.empty(self.max_size**2 * BITS_PER_CELL + BITS_PER_CELL, dtype=int)
         
         # Get the object the player is standing on
         player_pos_type = self.discovered[self.get_pos()]
         self.discovered[self.get_pos()] = DHC.PLAYER.value # assigns the player to this location
-        pos_type_binary = format(player_pos_type, f"0{max_bits}b")
+        pos_type_binary = format(player_pos_type, f"0{BITS_PER_CELL}b")
         pos_type_binary = [int(bit) for bit in pos_type_binary]
-        print(pos_type_binary, len(pos_type_binary))
-        encoded_array[0 : max_bits] = pos_type_binary # stores the object at the beginning of the encoded array
+        
+        # print(pos_type_binary, len(pos_type_binary))
+        
+        encoded_array[0 : BITS_PER_CELL] = pos_type_binary # stores the object at the beginning of the encoded array
 
 
-        index = max_bits # because the first 5 bits are
+        index = BITS_PER_CELL # because the first 5 bits are
         # dedicated to the player's standing position
 
         # Iterate over each cell in the maze
         for i in range(self.max_size):
             for j in range(self.max_size):
-                binary_code = format(self.discovered[i, j], f"0{max_bits}b")
+                binary_code = format(self.discovered[i, j], f"0{BITS_PER_CELL}b")
                 bits = [int(bit) for bit in binary_code]
-                encoded_array[index:index + max_bits] = bits
-                index += max_bits # increment to next position for the next grid slot
+                encoded_array[index:index + BITS_PER_CELL] = bits
+                index += BITS_PER_CELL # increment to next position for the next grid slot
 
 
         # swaps back the object on the player position

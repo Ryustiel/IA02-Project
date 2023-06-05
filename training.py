@@ -2,7 +2,7 @@ import neat
 from train_utilities import MazeRep, MAX_SIZE
 from generateur import get_random_maze
 
-config_path = "path/to/your/config-file"
+config_path = "neat_config.ini"
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                      neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
@@ -12,10 +12,10 @@ def eval_genomes(genomes, config):
     # generates 1 random maze for testing
     grid, starting = get_random_maze(max_size = MAX_SIZE)
     
-    
     for genome_id, genome in genomes:
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        genome.fitness = MAZE.evaluate_score(net)
+        genome.fitness = MazeRep(grid, starting).evaluate(net)
+
 
 # Create the population
 population = neat.Population(config)
@@ -25,10 +25,11 @@ stats = neat.StatisticsReporter()
 population.add_reporter(stats)
 population.add_reporter(neat.Checkpointer(generation_interval=100))
 
+
 # Run the evolution
 
 generations = 10  # Number of generations to evolve
-for _ in range(generations):
+for i in range(generations):
     # Evaluate fitness and run NEAT algorithm for one generation
     genomes = population.run(eval_genomes, 1)
 
@@ -42,7 +43,7 @@ for _ in range(generations):
 
     # Evaluate the best genome further if needed
     net = neat.nn.FeedForwardNetwork.create(best_genome, config)
-    test_maze = MAZE.set_random_training_maze()  # Replace with your own test maze generation logic
-    score = MAZE.evaluate_score(net)  # Replace with your own evaluation logic
+    grid, starting = get_random_maze(MAX_SIZE)  # Replace with your own test maze generation logic
+    score = MazeRep(grid, starting).evaluate_score(net)  # Replace with your own evaluation logic
 
-    print(f"Generation {_+1} - Best Fitness: {best_fitness} - Score: {score}")
+    print(f"Generation {i + 1} - Best Fitness: {best_fitness} - Score: {score}")

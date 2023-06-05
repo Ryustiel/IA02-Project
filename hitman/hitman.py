@@ -144,10 +144,6 @@ class HitmanReferee:
             self.__n = len(self.__world[0])
         else:
             raise NotImplementedError("TODO")
-        
-        wrld = np.array(self.__world)
-        f = np.vectorize(lambda x: x.value)
-        print("\nWORLD\n", f(wrld))
 
         self.__civil_count = self.__compute_civil_count()
         self.__guard_count = self.__compute_guard_count()

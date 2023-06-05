@@ -31,9 +31,12 @@ def main():
                 self.state += 1
                 return self.actions[self.state - 1]
     
-    print(m)
     p = m.evaluate(Net())
     print(p)
+    print(m)
+
+    enc = m.getEncoding()
+    print(len(enc)) # should be 5 * 
 
     #pprint(hr.send_content({(0, 0): HC.EMPTY}))
     #pprint(hr.send_content(complete_map_example))
