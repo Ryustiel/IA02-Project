@@ -7,12 +7,14 @@ from enum import Enum
 # TRAINING CONSTANTS
 
 MAX_SIZE = 10
-BITS_PER_CELL = 6
+BITS_PER_CELL = 6 # bits per cell for the encoding
+MAX_ITERATION = 30
 PENALTY_UNDISCOVERED = 15 # penalty when a tile has not been discovered
 
 class DHC(Enum): # elements for AI discovery
     # compter par l'arrière pour l'encodage binaire
     # est une heuristique
+    PLAYER = 31
     UNKNOWN = 30
     HEAR_PERS_1 = 29
     HEAR_PERS_2 = 28
@@ -83,6 +85,7 @@ class MazeRep():
     def grid_to_matrix(self, indices):
         return indices[1], self.width - 1 - indices[0]
     
+
     def update_state(self, data: Dict):
         # mettre à jour le champ de vision par rapport à l'objet détecté en premier
         # vérifier si la pièce est fermée à tout moment
@@ -109,11 +112,14 @@ class MazeRep():
         ...
 
 
+
     def set_penalty_for_failing(self):
         self.penalties += PENALTY_UNDISCOVERED * np.sum(self.discovered > 20) # values that mean undiscovered
         
         # print("FOUND", np.sum(self.discovered > 20), "TOTAL", self.width * self.height)
 
+    def not_yet_complete(self) -> bool:
+        return np.any(self.discovered > 20)
     
     def max_penalty(self):
         # returns the maximum penalty value
@@ -138,7 +144,35 @@ class MazeRep():
         if self.is_done:
             self.set_penalty_for_failing()
 
-        self.is_done
+        self.getEncoding(), self.penalty_to_reward(), self.is_done
+
+
+
+    def evaluate_neat(self, net): # -> (isWon[bool], score[int]=None)
+        # net is a randomly generated net that should be able to play the game
+        # échec = 2 * 5 * grid_size squared
+        # lorsqu'echec, -10 par case non découverte
+        
+        i = 0
+
+        while self.is_done:
+            i += 1 # counting loop iterations
+
+            input_data = self.getEncoding()
+
+            output = net.activate(input_data) # besoin que de 2 output
+            action = np.random.choice(3, p=np.squeeze(output))
+
+            self.step(action)
+
+            # print(self)
+        
+            if i > MAX_ITERATION:
+                self.set_penalty_for_failing()
+                break
+
+        return self.penalty_to_reward()
+
 
 
     def toINT(self) -> List[List[int]]: 
@@ -147,63 +181,77 @@ class MazeRep():
         int_grid = f(self.getGrid())
         # int_grid[self.get_pos()] = DHC.PLAYER.value
         return int_grid
-    
+
+
+    def encode_cell(self, cell):
+        # binary_code = format(cell, f"0{BITS_PER_CELL}b")
+        # bits = [int(bit) for bit in binary_code]
+        # return bits
+
+        # [is undiscovered, is wall, is guard, direction 1, direction 2]
+
+        if cell == DHC.UNKNOWN.value: # undiscovered
+            return [0, 0, 0, 0, 0] # TEMPORARY
+        elif cell == hitman.HC.EMPTY.value: # wall
+            return [1, 1, 0, 0, 0]
+        
+        elif cell == DHC.PLAYER.value: # player
+            if self.orientation == hitman.HC.N.value:
+                return [1, 0, 0, 0, 0] # direction the player is facing
+            elif self.orientation == hitman.HC.E.value:
+                return [1, 0, 0, 1, 0]
+            elif self.orientation == hitman.HC.W.value:
+                return [1, 0, 0, 0, 1]
+            elif self.orientation == hitman.HC.S.value:
+                return [1, 0, 0, 1, 1]
+        
+        elif cell >= 26: # SPECIAL MARKINGS
+            return [0, 0, 1, 0, 0]
+        
+        # guards
+        elif cell == hitman.HC.GUARD_N.value:
+            return [1, 1, 1, 0, 0]
+        elif cell == hitman.HC.GUARD_E.value:
+            return [1, 1, 1, 1, 0]
+        elif cell == hitman.HC.GUARD_W.value:
+            return [1, 1, 1, 0, 1]
+        elif cell == hitman.HC.GUARD_S.value:
+            return [1, 1, 1, 1, 1]
+        
+        else:
+            return [1, 0, 0, 0, 0] # walkable
+        
+
     def getEncoding(self):
-        encoding = np.zeros((self.max_size, self.max_size, BITS_PER_CELL))
+        CELL_LEN = 5
 
-        pos = self.get_pos()
+        # Create an empty array with shape (grid_shape[0], grid_shape[1], num_objects)
+        encoded_array = np.empty(self.max_size**2 * CELL_LEN + CELL_LEN, dtype=int)
+        
+        # Get the object the player is standing on
+        player_pos_type = self.discovered[self.get_pos()]
+        self.discovered[self.get_pos()] = DHC.PLAYER.value # assigns the player to this location
+        pos_type_binary = self.encode_cell(player_pos_type)
+        
+        # print(pos_type_binary, len(pos_type_binary))
+        
+        encoded_array[0 : BITS_PER_CELL] = pos_type_binary # stores the object at the beginning of the encoded array
 
+
+        index = CELL_LEN # because the first 5 bits are
+        # dedicated to the player's standing position
+
+        # Iterate over each cell in the maze
         for i in range(self.max_size):
             for j in range(self.max_size):
-                # [is discovered, is wall, is guard, direction 1, direction 2, is_player]
+                bits = self.encode_cell(self.discovered[i, j])
+                encoded_array[index:index + BITS_PER_CELL] = bits
+                index += BITS_PER_CELL # increment to next position for the next grid slot
 
-                cell = self.discovered[i, j]
+        # swaps back the object on the player position
+        self.discovered[self.get_pos()] = player_pos_type
 
-                # DHC.UNKNOWN.value: (0, 0, 0, 0, 0, 0)
-                # hitman.HC.EMPTY.value: (1, 1, 0, 0, 0, 0)
-                # DHC.PLAYER.value && HC.N: (1, 0, 0, 0, 0, 0)
-                # HC.S = (1, 0, 0, 1, 1, 0); HC.W = (1, 0, 0, 0, 1, 0)
-                # HC.E = (1, 0, 0, 1, 0, 0)
-                
-                if cell < 17: # is it discovered
-                    encoding[i, j, 0] = 1
-
-                if ( # is it walkable
-                    cell == hitman.HC.WALL.value
-                ):
-                    encoding[i, j, 1] = 1
-
-                if ( # is it a guard
-                    (cell >= hitman.HC.GUARD_N.value and cell <= hitman.HC.GUARD_W.value)
-                ):
-                    encoding[i, j, 1] = 1
-                    encoding[i, j, 2] = 1 # is guard
-
-                if (cell >= 26 and cell < 30): # SPECIAL MARKINGS : potential guards
-                    encoding[i, j, 2] = 1 # mais pas indice 1 : walkable
-
-                if ( # south or east
-                    cell == hitman.HC.GUARD_S
-                    or cell == hitman.HC.GUARD_E
-                ):
-                    encoding[i, j, 3] = 1  
-                
-                if ( # south or west
-                    cell == hitman.HC.GUARD_S
-                    or cell == hitman.HC.GUARD_W
-                ):
-                    encoding[i, j, 4] = 1
-                
-
-                if (i, j) == pos: # if it's a player
-                    encoding[i, j, 5] = 1
-                    if self.orientation == hitman.HC.S or self.orientation == hitman.HC.E:
-                        encoding[i, j, 3] = 1
-                    if self.orientation == hitman.HC.S or self.orientation == hitman.HC.W:
-                        encoding[i, j, 4] = 1
-
-        return encoding
-
+        return encoded_array
 
 
     def getResult(self):

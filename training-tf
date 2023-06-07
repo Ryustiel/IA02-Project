@@ -1,46 +1,84 @@
 import tensorflow as tf
 import numpy as np
+from hitman.hitman import world_example
+from train_utilities import MazeRep, MAX_SIZE
+from generateur import get_random_maze
 
-# Define the maze environment and its properties
-# ...
+# params
+NUM_ACTIONS = 3
+MAX_WIDTH = 10
+MAX_STEPS = 200
+NUM_EPISODES = 100
+BITS_PER_CELL = 6
+
+def try_model(model):
+    env = MazeRep(world_example, (0, 0))
+    state = env.getEncoding()
+    done = False
+    while not done:
+        action_probs = model.predict(np.expand_dims(state, axis=0))
+        action = np.random.choice(NUM_ACTIONS, p=np.squeeze(action_probs))
+        state, action_probs, done = env.step(action)
+    return env
+                
 
 # Define the neural network model using the Keras API
-# ...
+# CNN model
+model = tf.keras.Sequential([
+    #tf.keras.layers.Reshape((
+    #    MAX_WIDTH, MAX_WIDTH, BITS_PER_CELL), 
+    #    input_shape=(MAX_WIDTH * MAX_WIDTH * BITS_PER_CELL,)),
+    tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(NUM_ACTIONS, activation='softmax')
+])
 
 # Define the optimizer
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
+grid, starting = get_random_maze(max_size = MAX_SIZE)
+
 # Define the training loop
 def train_agent(num_episodes, max_steps_per_episode):
     for episode in range(num_episodes):
-        state = env.reset()  # Reset the environment at the beginning of each episode
+        env = MazeRep(world_example, (0, 0))  # Reset the environment at the beginning of each episode
         episode_reward = 0
+        reward = 0
 
-        with tf.GradientTape() as tape:
-            for step in range(max_steps_per_episode):
+        for _ in range(max_steps_per_episode):
+            with tf.GradientTape() as tape:
                 # Predict action probabilities using the policy network
-                action_probs = model.predict(np.expand_dims(state, axis=0))
-                action = np.random.choice(num_actions, p=np.squeeze(action_probs))
+                state = env.getEncoding()
+                state = np.expand_dims(state, axis=0)
+                action_probs = model.predict(state)
+                print("PASSED THIS POINT")
+                action = np.random.choice(NUM_ACTIONS, p=np.squeeze(action_probs))
 
                 # Take the selected action and observe the next state and reward
-                next_state, reward, done = env.step(action)
-                episode_reward += reward
+                done = env.step(action)
+                reward = env.get_reward() - reward
 
                 # Compute the loss
                 loss = -tf.math.log(action_probs[0][action]) * reward
-                
-                # Perform backpropagation to compute gradients
-                grads = tape.gradient(loss, model.trainable_variables)
-                
-                # Apply gradients to update the model's parameters
-                optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-                if done:
-                    break
+            # Perform backpropagation to compute gradients
+            grads = tape.gradient(loss, model.trainable_variables)
 
-                state = next_state
+            # Apply gradients to update the model's parameters
+            optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-        print(f"Episode {episode + 1}: Reward = {episode_reward}")
+            episode_reward += reward
+
+            if done:
+                break
+
+        test = try_model(model)
+        print(f"Episode {episode + 1}: Reward = {episode_reward}\nCurrent Path : {test}")
+
 
 # Run the training loop
-train_agent(num_episodes=100, max_steps_per_episode=200)
+train_agent(num_episodes=NUM_EPISODES, max_steps_per_episode=MAX_STEPS)

@@ -33,7 +33,7 @@ def main():
     
     #p = m.evaluate(Net())
     #print(p)
-    m.action_interface(1)
+    m.step(1)
     print(m)
 
     enc = m.getEncoding()

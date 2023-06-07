@@ -33,7 +33,7 @@ def eval_genomes(genomes, config):
         genome.fitness = 0
 
         for (grid, starting) in mazes:
-            genome.fitness += MazeRep(grid, starting).evaluate(net)
+            genome.fitness += MazeRep(grid, starting).evaluate_neat(net)
 
         # genome.fitness = MazeRep(grid, starting).evaluate(net)
 
