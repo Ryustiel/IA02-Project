@@ -37,7 +37,7 @@ def main():
     print(m)
 
     enc = m.getEncoding()
-    print(enc)
+    # print(enc)
     print(len(enc)) # should be 5 * 
 
     o = """

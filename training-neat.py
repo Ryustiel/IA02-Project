@@ -42,7 +42,7 @@ def eval_genomes(genomes, config):
 
     # EVALUATING BEST ON TEST GRID
     trial_net = neat.nn.FeedForwardNetwork.create(genome, config)
-    mz = MazeRep(world_example, (0, 0))
+    mz = MazeRep(world_example, (5, 0))
     print(f"DONE (Best : {best.fitness})")
     print(mz)
 

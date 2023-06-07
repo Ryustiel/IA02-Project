@@ -44,19 +44,20 @@ class MazeRep():
         # Get the current maze dimensions
 
         self.grid = np.array(grid)
-        self.pos = start_pos # STORED AS PROF FORMAT
 
-        print(start_pos, self.grid.shape)
+        current_width, current_height = self.grid.shape
+        self.width = current_width
+        self.height = current_height
+
+        self.pos = self.grid_to_matrix(start_pos) # STORED AS PROF FORMAT
+
+        # print("START POS", start_pos, "PASSED COORDS", self.pos, "GETPOS", self.get_pos(), "SHAPE", self.grid.shape)
 
         self.referee = hitman.HitmanReferee(
                 world = self.grid, 
                 pos = self.pos
                 )
 
-        current_width, current_height = self.grid.shape
-        self.width = current_width
-        self.height = current_height
-        
         self.discovered = np.full((self.width, self.height), DHC.UNKNOWN.value) # part de la grille découverte
 
         # self.grid is a record of the full maze state, for pretty printing
@@ -80,7 +81,7 @@ class MazeRep():
         index his arrays bottom to top
         """
         return self.width - 1 - pos[1], pos[0]
-    
+
     def grid_to_matrix(self, indices):
         return indices[1], self.width - 1 - indices[0]
     
@@ -152,14 +153,17 @@ class MazeRep():
 
             output = net.activate(input_data) # besoin que de 2 output
 
-            # print(output)
+            print(output, end=" ")
 
             if output[0] > 0:
-                self.action_interface(2)
-            elif output[1] > 0:
-                self.action_interface(1)
+                status = self.referee.move()
             else:
-                self.action_interface(0)
+                if output[1] > 0:
+                    status = self.referee.turn_anti_clockwise()
+                else:
+                    status = self.referee.turn_clockwise()
+
+            self.update_state(status)
 
             # print(self)
         
@@ -264,6 +268,6 @@ class MazeRep():
         player_pos_type = self.discovered[self.get_pos()]
         self.discovered[self.get_pos()] = 77
         s = str(self.discovered[0:self.width, 0:self.height])
-        s = str(self.discovered)
+        # s = str(self.discovered)
         self.discovered[self.get_pos()] = player_pos_type # puts the original value back
         return s + "\n"
