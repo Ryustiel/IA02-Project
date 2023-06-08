@@ -26,7 +26,7 @@ D = deguisement
 
 import random
 
-def affichage(grille):
+def affichage(grille, pos):
     affic=copy.deepcopy(grille)
     for i in range (len(grille)):
         for j in range (len(grille[i])):
@@ -56,9 +56,9 @@ def affichage(grille):
                 affic[i][j]='D'
             if grille[i][j]==HC.PIANO_WIRE:
                 affic[i][j]='A'
-            if grille[i][j]==HC.BEGIN:
-                affic[i][j]='&'
-    return affic
+
+    affic[pos[0]][pos[1]] = '&'
+    return str(affic)
 
 def get_random_maze(max_size: int):
     valide=False

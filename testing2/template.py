@@ -5,6 +5,7 @@ import gym
 # Define the maze environment
 class MazeEnv(gym.Env):
     def __init__(self):
+        # REPLACE WITH HIDDEN MAZE STATE AND ACTUAL MAZE STATE
         self.maze = np.array([
             [0, 0, 0, 0, 0],
             [0, 1, 1, 0, 0],
@@ -12,7 +13,7 @@ class MazeEnv(gym.Env):
             [0, 1, 0, 1, 0],
             [0, 0, 0, 0, 0]
         ])  # 0 represents an empty cell, 1 represents a wall
-        self.start_state = (0, 0)
+        self.start_state = (0, 0) # CHANGE TO PARAMETER
         self.goal_state = (4, 4)
         self.current_state = self.start_state
         self.action_space = gym.spaces.Discrete(4)  # 4 possible actions: 0 = up, 1 = down, 2 = left, 3 = right
@@ -23,7 +24,7 @@ class MazeEnv(gym.Env):
         return self.current_state
 
     def step(self, action):
-        new_state = self._get_new_state(action)
+        new_state = self._get_new_state(action) # MODIFIER HITMAN DIRECTEMENT
         reward = self._get_reward(new_state)
         done = self._is_done(new_state)
         self.current_state = new_state

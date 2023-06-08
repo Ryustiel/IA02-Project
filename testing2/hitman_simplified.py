@@ -77,6 +77,11 @@ class HC(Enum):
     S = 16
     W = 17
 
+class DHC(Enum):
+    UNKNOWN = 30
+    HEAR_PERS_1 = 29
+    HEAR_PERS_2 = 28
+    HEAR_PERS_3 = 27
 
 # Provisoire...
 world_example = [
@@ -88,62 +93,12 @@ world_example = [
     [HC.EMPTY, HC.EMPTY, HC.WALL, HC.WALL, HC.EMPTY, HC.PIANO_WIRE, HC.EMPTY],
 ]
 
-complete_map_example = {
-    (0, 5): HC.EMPTY,
-    (1, 5): HC.EMPTY,
-    (2, 5): HC.EMPTY,
-    (3, 5): HC.SUIT,
-    (4, 5): HC.GUARD_S,
-    (5, 5): HC.WALL,
-    (6, 5): HC.WALL,
-    (0, 4): HC.EMPTY,
-    (1, 4): HC.WALL,
-    (2, 4): HC.EMPTY,
-    (3, 4): HC.EMPTY,
-    (4, 4): HC.EMPTY,
-    (5, 4): HC.EMPTY,
-    (6, 4): HC.EMPTY,
-    (0, 3): HC.TARGET,
-    (1, 3): HC.WALL,
-    (2, 3): HC.EMPTY,
-    (3, 3): HC.EMPTY,
-    (4, 3): HC.EMPTY,
-    (5, 3): HC.CIVIL_N,
-    (6, 3): HC.EMPTY,
-    (0, 2): HC.WALL,
-    (1, 2): HC.WALL,
-    (2, 2): HC.EMPTY,
-    (3, 2): HC.GUARD_E,
-    (4, 2): HC.EMPTY,
-    (5, 2): HC.CIVIL_E,
-    (6, 2): HC.CIVIL_W,
-    (0, 1): HC.EMPTY,
-    (1, 1): HC.EMPTY,
-    (2, 1): HC.EMPTY,
-    (3, 1): HC.EMPTY,
-    (4, 1): HC.EMPTY,
-    (5, 1): HC.EMPTY,
-    (6, 1): HC.EMPTY,
-    (0, 0): HC.EMPTY,
-    (1, 0): HC.EMPTY,
-    (2, 0): HC.WALL,
-    (3, 0): HC.WALL,
-    (4, 0): HC.EMPTY,
-    (5, 0): HC.PIANO_WIRE,
-    (6, 0): HC.EMPTY,
-}
-
 
 class HitmanReferee:
-    def __init__(self, filename: str = "", world: Tuple = (None, None)): # world : (grid, start)
+    def __init__(self, filename: str = ""):
         self.__filename = filename
         if filename == "":
-            if world[0] is not None:
-                self.__world = world[0]
-                self.__pos = world[1]
-            else:
-                self.__world = world_example
-                self.__pos = (0, 0)
+            self.__world = world_example
             self.__m = len(self.__world)
             self.__n = len(self.__world[0])
         else:
@@ -153,10 +108,11 @@ class HitmanReferee:
         self.__guard_count = self.__compute_guard_count()
         self.__civils = self.__compute_civils()
         self.__guards = self.__compute_guards()
-        self.__phase = 0
+        self.__phase = 1 # FORCED
         self.__phase1_penalties = 0
         self.__phase1_guess_score = 0
         self.__phase2_penalties = 0
+        self.__pos = (0, 0)
         self.__orientation = HC.N
         self.__has_guessed = False
         self.__is_in_guard_range = False
@@ -167,10 +123,6 @@ class HitmanReferee:
         self.__suit_on = False
         self.__has_weapon = False
         self.__is_target_down = False
-
-    def start_phase1(self):
-        self.__phase = 1
-        return self.__get_status_phase_1()
 
     def __get_status_phase_1(self, err: str = "OK"):
         return {
@@ -386,171 +338,6 @@ class HitmanReferee:
             if self.__phase == 1
             else self.__get_status_phase_2()
         )
-
-    def start_phase2(self):
-        self.__phase = 2
-        self.__pos = (0, 0)
-        self.__orientation = HC.N
-        self.__seen_by_guard_num()
-        self.__seen_by_civil_num()
-        return self.__get_status_phase_2()
-
-    def __get_status_phase_2(self, err: str = "OK"):
-        return {
-            "status": err,
-            "phase": self.__phase,
-            "guard_count": self.__guard_count,
-            "civil_count": self.__civil_count,
-            "m": self.__m,
-            "n": self.__n,
-            "position": self.__pos,
-            "orientation": self.__orientation,
-            "vision": self.__get_vision(),
-            "hear": self.__get_listening(),
-            "penalties": self.__phase2_penalties,
-            "is_in_guard_range": self.__is_in_guard_range,
-            "is_in_civil_range": self.__is_in_civil_range,
-            "has_suit": self.__has_suit,
-            "is_suit_on": self.__suit_on,
-            "has_weapon": self.__has_weapon,
-            "is_target_down": self.__is_target_down,
-        }
-
-    def end_phase2(self):
-        if not self.__is_target_down or not self.__pos == (0, 0):
-            return False, "Err: finish the mission and go back to (0,0)", []
-        self.__phase = 0
-        return True, f"Your score is {- self.__phase2_penalties}", self.__phase2_history
-
-    def kill_target(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Kill Target")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += (
-            0 if self.__suit_on else 5 * self.__seen_by_guard_num()
-        )
-        x, y = self.__pos
-        if self.__get_world_content(x, y) != HC.TARGET or not self.__has_weapon:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__update_world_content(x, y, HC.EMPTY)
-        self.__is_target_down = True
-
-        self.__phase2_penalties += 100 * (
-            self.__seen_by_guard_num() + self.__seen_by_civil_num()
-        )
-        return self.__get_status_phase_2()
-
-    def neutralize_guard(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Neutralize Guard")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += 5 * self.__seen_by_guard_num()
-
-        offset_x, offset_y = self.__get_offset()
-        x, y = self.__pos
-
-        if self.__get_world_content(x + offset_x, y + offset_y) not in [
-            HC.GUARD_N,
-            HC.GUARD_E,
-            HC.GUARD_S,
-            HC.GUARD_W,
-        ] or (x, y) in [
-            pos for (pos, _) in self.__guards[(x + offset_x, y + offset_y)]
-        ]:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__phase2_penalties += 20
-        self.__update_world_content(x + offset_x, y + offset_y, HC.EMPTY)
-        self.__guard_count -= 1
-        self.__phase2_penalties += 100 * (
-            self.__seen_by_guard_num() + self.__seen_by_civil_num()
-        )
-
-        return self.__get_status_phase_2()
-
-    def neutralize_civil(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Neutralize Civil")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += 5 * self.__seen_by_guard_num()
-
-        offset_x, offset_y = self.__get_offset()
-        x, y = self.__pos
-        if self.__get_world_content(x + offset_x, y + offset_y) not in [
-            HC.CIVIL_N,
-            HC.CIVIL_E,
-            HC.CIVIL_S,
-            HC.CIVIL_W,
-        ] or (x, y) in [
-            pos for (pos, _) in self.__civils[(x + offset_x, y + offset_y)]
-        ]:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__phase2_penalties += 20
-        self.__update_world_content(x + offset_x, y + offset_y, HC.EMPTY)
-        self.__civil_count -= 1
-        self.__phase2_penalties += 100 * (
-            self.__seen_by_guard_num() + self.__seen_by_civil_num()
-        )
-
-        return self.__get_status_phase_2()
-
-    def take_suit(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Take Suit")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += 5 * self.__seen_by_guard_num()
-
-        x, y = self.__pos
-        if self.__get_world_content(x, y) != HC.SUIT:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__has_suit = True
-        self.__update_world_content(x, y, HC.EMPTY)
-
-        return self.__get_status_phase_2()
-
-    def take_weapon(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Take Weapon")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += 5 * self.__seen_by_guard_num()
-        x, y = self.__pos
-        if self.__get_world_content(x, y) != HC.PIANO_WIRE:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__has_weapon = True
-        self.__update_world_content(x, y, HC.EMPTY)
-
-        return self.__get_status_phase_2()
-
-    def put_on_suit(self):
-        if self.__phase != 2:
-            raise ValueError("Err: invalid phase")
-
-        self.__add_history("Put on Suit")
-        self.__phase2_penalties += 1
-        self.__phase2_penalties += 5 * self.__seen_by_guard_num()
-
-        if not self.__has_suit:
-            return self.__get_status_phase_2("Err: invalid move")
-
-        self.__suit_on = True
-        self.__phase2_penalties += 100 * (
-            self.__seen_by_guard_num() + self.__seen_by_civil_num()
-        )
-        return self.__get_status_phase_2()
 
     def __repr__(self) -> str:
         return f"HitmanReferee({self.__filename})"
