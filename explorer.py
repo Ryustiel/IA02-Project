@@ -94,6 +94,9 @@ class MazeExplorer(HitmanReferee):
         return False
 
     def getPos(self):
+        """
+        renvoie la position au format grille
+        """
         # returns the grid indice
         return self.matrix_to_grid(self._HitmanReferee__pos)
 
@@ -104,6 +107,10 @@ class MazeExplorer(HitmanReferee):
         return self._HitmanReferee__phase2_history
     
     def getState(self):
+        """
+        renvoie un tuple qui représente l'état de cette instance
+        pour comparer l'équivalence avec d'autres instances.
+        """
         return (
             self._HitmanReferee__orientation,
             self._HitmanReferee__has_suit, 
@@ -123,7 +130,7 @@ class MazeExplorer(HitmanReferee):
                 else:
                     accessibility[i][j] = 0 # accessible
         return accessibility
-        # 1 is penalized
+        # 1 is penalized : pénalité unique qui disparaît si on marche dessus
 
     def heuristiqueBackstep(self):
         # contrôle les aires qui nécessitent
@@ -142,17 +149,13 @@ class MazeExplorer(HitmanReferee):
 
         while len(traitement) > 0: 
             
-            ...
+            ... # NOT IMPLEMENTED
 
         ...
 
     def getActions(self):
         """
-        renvoie l'espace des actions possibles
-
-        0 : tourne horaire; 1 : anti horaire; 2 : move; 3 : tuer_cible; 4 : neutraliser_garde
-        (4) 5 : neutraliser civil; (3) 6 : récup costume; (3) 7 : prendre arme; 
-        (5) 8 : passer costume
+        renvoie l'espace des actions possibles (objets AC)
         """
         # 0, 1 : sont quasi toujours disponibles
         if self.spam_rotation > 1 or self.spam_rotation < -1: # non disponibles si deux fois consécutifs
@@ -182,16 +185,7 @@ class MazeExplorer(HitmanReferee):
 
             # 2 : autres objets bloquants (à part les gardes)
             elif object != HC.WALL: # is otherwise walkable
-                orientation = self._HitmanReferee__orientation
-                if ( # TO DO : USE MATRIX COORDS DIRECTLY INSTEAD
-                    # MAYBE THIS DIRECTION CHECK IS NOT EVEN NEEDED
-                    # BECAUSE VISION
-                    ( orientation == HC.N and pos[0] > 0 )
-                    or ( orientation == HC.S and pos[0] < self._HitmanReferee__n )
-                    or ( orientation == HC.E and pos[1] < self._HitmanReferee__m )
-                    or ( orientation == HC.W and pos[1] > 0 )
-                ):
-                    actions.append(AC.MOVE)
+                actions.append(AC.MOVE)
 
         # 3 : case sur laquelle on se tient
 
@@ -214,13 +208,13 @@ class MazeExplorer(HitmanReferee):
 
         return actions
 
-    def branch(self, action: AC) -> bool: # -> MazeRep(), score
+    def branch(self, action: AC) -> Tuple[int, bool]: # -> MazeRep(), score
         """
-        renvoie une copie de cet objet, avec le nouvel état du jeu, et un score
-        Met à jour la nouvelle grille : current position = -1
+        Applique l'action sélectionnée au jeu, 
+        renvoie le score atteint (int) et l'état de victoire (bool)
         """
         # faire un dupliqué, puis appeler branch, et récupérer la branche...
-        self._HitmanReferee__phase2_penalties += 1 # adding penalty for performing an action
+        # self._HitmanReferee__phase2_penalties += 1 # adding penalty for performing an action
 
         if action == AC.MOVE:
             self.move()
@@ -239,7 +233,7 @@ class MazeExplorer(HitmanReferee):
 
         elif action == AC.ARME:
             self.take_weapon()
-            self._HitmanReferee__phase2_penalties -= 20 # make it dependant on the maze's width
+            self._HitmanReferee__phase2_penalties -= 10 # make it dependant on the maze's width
 
         elif action == AC.CIVIL: 
             self.neutralize_civil()
@@ -257,128 +251,12 @@ class MazeExplorer(HitmanReferee):
             # this is not reseting rotation
 
         elif action == AC.KILL:
-            self._HitmanReferee__phase2_penalties -= 20
+            self._HitmanReferee__phase2_penalties -= 10
             self.kill_target()
 
-        # lister plus d'actions
-
-        # wrapper l'erreur dans status...
+        # TO DO : wrapper l'erreur dans status...
 
         return self.getScore(), self.hasWon()
     
     def __str__(self):
         return affichage(np.array(self._HitmanReferee__world), self.getPos())
-
-
-
-# ==================================================================================== SOLVER
-
-
-def solve(grid, starting):
-    """
-    gère une file d'instances de jeu à différents niveaux d'avancement,
-    traite intégralement chaque branchement possible sauf les branchements
-    des branchements.
-    Regarde le score obtenu, sélectionne la branche qui a le score minimal
-    pour brancher à partir de là.
-    """
-    instances = deque()
-    instances.appendleft(MazeExplorer(grid, starting)) # trié en par profondeur
-    threshold = 0 # détermine dans quel file les noeuds vont être insérés
-
-    # regarder les états déjà visités; si c'est le cas, vérifier si la pénalité est inférieure
-    # si c'est supérieur, ne pas parcourir les enfants; (orientation, has_suit, suit_on, has_weapon, target_down)
-    # dérivée de a*
-
-    # [orientations * etats]
-    solutions = np.array(
-    [ [list()] * len(grid[0]) ] * len(grid)
-    )
-    
-    MAX_ITERATION = 10000
-    done = False
-
-    while MAX_ITERATION > 0 and len(instances) > 0:
-
-        maze = instances.popleft()
-        for action in maze.getActions():
-
-            new_instance = deepcopy(maze)
-            score, done = new_instance.branch(action) # done = true dès que solution
-            # on veut minimiser le score à la fin
-
-            if done:
-                print("DONE")
-                return new_instance
-
-            # ajouter à la file en triant
-
-            i = 0
-            l = len(instances)
-            while i < l:
-                if instances[i].getScore() >= score: # si score plus grand insérer
-                    # ou égal pour éviter de parcourir les == pour rien
-                    instances.insert(i, new_instance)
-                    break
-                i += 1
-            if i == l:
-                instances.append(new_instance)
-
-        MAX_ITERATION -= 1
-
-        # DISPLAY
-        if MAX_ITERATION % 1000 == 0:
-            print(MAX_ITERATION // 1000, " : ", len(instances))
-
-        if MAX_ITERATION % 1000 == 0:
-            print(instances[0])
-            print(instances[0].getHistory())
-            print(instances[0].getScore())
-            print("\n\n\n")
-
-    if len(instances) > 0:
-        return instances.popleft()
-    return None
-
-
-
-def handmade_solution():
-    m = MazeExplorer(world_example, (5, 0))
-    print(m, "\n\n")
-
-    instructions = [
-        AC.MOVE, AC.HORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE,
-        AC.MOVE, AC.HORAIRE, AC.MOVE, AC.ARME, AC.HORAIRE, AC.HORAIRE,
-        AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.HORAIRE,
-        AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, 
-        AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.KILL, AC.ANTIHORAIRE,
-        AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.HORAIRE, AC.MOVE, AC.MOVE,
-        AC.HORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE, AC.HORAIRE, AC.MOVE,
-        AC.MOVE, AC.ANTIHORAIRE, AC.MOVE
-    ]
-    for instruction in instructions:
-        print(m.getActions())
-        m.branch(instruction)
-        print(m)
-        print(m.accessibility_matrix)
-        print(m.getState())
-        print(m.hasWon(), "\n", m.getScore(), "\n\n")
-
-
-grid, starting = get_random_maze(max_size = MAX_SIZE)
-
-grid, starting = world_example, (5, 0)
-
-#handmade_solution()
-
-res = solve(grid, starting)
-
-# et là il va falloir utiliser les instructions, tester le tout
-o = """
-print("================= RESULTS =================")
-print(res)
-print(res.getScore(), res.previous_penalties)
-print(res.depth, res.hasWon())
-h = res.getHistory()
-print(len(h), h[0:10])
-"""

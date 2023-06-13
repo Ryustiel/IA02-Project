@@ -58,7 +58,12 @@ def affichage(grille, pos):
                 affic[i][j]='A'
 
     affic[pos[0]][pos[1]] = '&'
-    return str(affic)
+    s = ""
+    for line in affic:
+        for c in line:
+            s += c + " "
+        s += "\n"
+    return s
 
 def get_random_maze(max_size: int):
     valide=False
