@@ -1,6 +1,6 @@
 import random, copy
 from enum import Enum
-from hitman.hitman import HC
+from testing2.hitman2 import HC
 import numpy as np
 
 '''

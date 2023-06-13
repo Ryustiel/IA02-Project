@@ -135,15 +135,10 @@ complete_map_example = {
 
 
 class HitmanReferee:
-    def __init__(self, filename: str = "", world: Tuple = (None, None)): # world : (grid, start)
+    def __init__(self, filename: str = ""):
         self.__filename = filename
         if filename == "":
-            if world[0] is not None:
-                self.__world = world[0]
-                self.__pos = world[1]
-            else:
-                self.__world = world_example
-                self.__pos = (0, 0)
+            self.__world = world_example
             self.__m = len(self.__world)
             self.__n = len(self.__world[0])
         else:
@@ -157,6 +152,7 @@ class HitmanReferee:
         self.__phase1_penalties = 0
         self.__phase1_guess_score = 0
         self.__phase2_penalties = 0
+        self.__pos = (0, 0)
         self.__orientation = HC.N
         self.__has_guessed = False
         self.__is_in_guard_range = False
