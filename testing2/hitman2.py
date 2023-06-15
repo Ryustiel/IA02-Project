@@ -135,10 +135,11 @@ complete_map_example = {
 
 
 class HitmanReferee:
-    def __init__(self, filename: str = ""):
+    def __init__(self, world, startpos, filename: str = ""):
         self.__filename = filename
+        self.__startpos = (startpos[0], startpos[1])
         if filename == "":
-            self.__world = world_example
+            self.__world = world
             self.__m = len(self.__world)
             self.__n = len(self.__world[0])
         else:
@@ -152,7 +153,7 @@ class HitmanReferee:
         self.__phase1_penalties = 0
         self.__phase1_guess_score = 0
         self.__phase2_penalties = 0
-        self.__pos = (0, 0)
+        self.__pos = self.__startpos
         self.__orientation = HC.N
         self.__has_guessed = False
         self.__is_in_guard_range = False
@@ -385,7 +386,7 @@ class HitmanReferee:
 
     def start_phase2(self):
         self.__phase = 2
-        self.__pos = (0, 0)
+        self.__pos = self.__startpos
         self.__orientation = HC.N
         self.__seen_by_guard_num()
         self.__seen_by_civil_num()
@@ -413,7 +414,7 @@ class HitmanReferee:
         }
 
     def end_phase2(self):
-        if not self.__is_target_down or not self.__pos == (0, 0):
+        if not self.__is_target_down or not self.__pos == self.__startpos:
             return False, "Err: finish the mission and go back to (0,0)", []
         self.__phase = 0
         return True, f"Your score is {- self.__phase2_penalties}", self.__phase2_history
