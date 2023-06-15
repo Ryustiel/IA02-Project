@@ -1,15 +1,10 @@
 from explorer import *
+import time
 
-handmade_instructions_world_example = [
-    AC.MOVE, AC.HORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE,
-    AC.MOVE, AC.HORAIRE, AC.MOVE, AC.ARME, AC.HORAIRE, AC.HORAIRE,
-    AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.HORAIRE,
-    AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, 
-    AC.MOVE, AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.KILL, AC.ANTIHORAIRE,
-    AC.ANTIHORAIRE, AC.MOVE, AC.MOVE, AC.HORAIRE, AC.MOVE, AC.MOVE,
-    AC.HORAIRE, AC.MOVE, AC.MOVE, AC.MOVE, AC.MOVE, AC.HORAIRE, AC.MOVE,
-    AC.MOVE, AC.ANTIHORAIRE, AC.MOVE
-]
+# CONSTANTS
+MAX_ITERATION_COEFFICIENT = 20 # sera multiplé par le nombre de cases
+# pour déterminer une limite d'exploration
+DISPLAY_EVERY_X_ITERATION = 100
 
 def tryout(actions, grid, origin):
     print(affichage(grid, matrix_to_grid(origin, len(grid))))
@@ -28,6 +23,13 @@ def tryout(actions, grid, origin):
         print(affichage(grid, coords))
         print(done, status['penalties'], "\n")
 
+def calculate_penalties(actions, grid, origin):
+    explorer = MazeExplorer(HitmanReferee(grid, origin))
+    status = explorer.referee.start_phase2()
+    for instruction in actions:
+        status = explorer.branch(instruction)
+        
+    return status['penalties']
 
 # ===================================================== SOLVER
 
@@ -43,11 +45,15 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
     print(starting, origin)
 
     instances = deque()
-    instances.appendleft(MazeExplorer(HitmanReferee(grid, origin))) # trié en par profondeur
-    
-    heuristique_min_penalty = None # penalite minimale pour atteindre l'arme déduite
-    # laisse tout de même la possibilité à l'arbre de faire des compromis pour atteindre
-    # une arme avec un meilleur angle
+
+    maze = MazeExplorer(HitmanReferee(grid, origin))
+    maze.status = maze.referee.start_phase2() # init value of STATUS
+    instances.appendleft(maze) # élément initial
+
+    heuristique_min_penalty_arme = None # lorsqu'un objectif de jeu est atteint,
+    # soustrait la pénalité minimale à l'agent
+    # permet d'explorer en priorité les chemins qui partent de cet objectif
+    heuristique_min_penalty_kill = None
 
     # demi trajet évite de revenir au noeud de départ
     # (orientation, has_suit, suit_on, has_weapon, target_down)
@@ -59,19 +65,16 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
         for _ in range(len(grid[0])):
             heuristique_demi_trajet[i].append(list())
     
-    MAX_ITERATION = 10000 # IDEE : LE FAIRE DEP DE LA TAILLE DE LA CARTE
+    MAX_ITERATION = MAX_ITERATION_COEFFICIENT * len(grid[0]) * len(grid)
+    print("MAX_ITERATION :", MAX_ITERATION)
+    start_time = time.time()
 
     while MAX_ITERATION > 0 and len(instances) > 0:
 
         maze = instances.popleft()
         # up to date with the maze's history
 
-        status = maze.referee.start_phase2() # COPIER LE REFEREE A JOUR SYSTEMATIQUEMENT
-        for act in maze.history:
-            status = perform(maze.referee, act)
-
-        pos = matrix_to_grid(status['position'], status['m']) # EN FAIRE DES OBJETS MATRICE
-        for action in maze.getActions(status, grid[pos[0]][pos[1]]):
+        for action in maze.getActions(grid):
 
             new_instance = deepcopy(maze)
             # créer une copie du referee pour chaque euh... branche
@@ -81,14 +84,25 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             done = has_won(status, origin)
             # penalties mis à jour dans new_instance
 
-            # ajouter les décalages de scores
-            if action == AC.ARME or action == AC.KILL:
-                new_instance.penalties -= 2 # bonus spontané pour guider le bot
-                # IDEE : PROPORTIONNEL A LA PENALITE MINIMALE NECESSAIRE POUR L'ATTEINDRE
+            # MANIPULATION DES SCORES POUR L'EXPLORATION
+            if action == AC.HORAIRE or action == AC.ANTIHORAIRE:
+                new_instance.penalties += 1
+                # rotation coûte plus chère que avancer, mais pas trop
+
+            elif action == AC.ARME:
+                # on enlève min_penalty à chaque fois que l'objectif est atteint
+                if heuristique_min_penalty_arme is None:
+                    heuristique_min_penalty_arme = new_instance.penalties
+                new_instance.penalties -= heuristique_min_penalty_arme
+
+            elif action == AC.ARME:
+                if heuristique_min_penalty_kill is None:
+                    heuristique_min_penalty_kill = new_instance.penalties
+                new_instance.penalties -= heuristique_min_penalty_kill
 
             if done:
                 print("DONE")
-                return new_instance
+                return new_instance, get_ellapsed_string(start_time)
 
             # ELSE
             # verifie si ça vaut le coup de conserver l'array
@@ -119,17 +133,24 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
                 
         MAX_ITERATION -= 1
 
-        # DISPLAY
-        if MAX_ITERATION % 100 == 0:
-            print(MAX_ITERATION // 100, " : ", len(instances))
+        # TRACKING
+        if MAX_ITERATION % DISPLAY_EVERY_X_ITERATION == 0:
+            # gathering info
+            time_str = get_ellapsed_string(start_time)
+
+            # printing ingo
+            print(f"{MAX_ITERATION // 100} batches left : {len(instances)} instances : {time_str} ellapsed")
             print(affichage(grid, matrix_to_grid(status['position'], status['m'])))
+
+            # printing exploration matrix
             l = np.zeros((len(grid), len(grid[0])), dtype=np.int8)
             for i in range(len(grid)):
                 for j in range(len(grid[0])):
-                    l[i, j] = len(heuristique_demi_trajet[i][j])
+                    ntried = len(heuristique_demi_trajet[i][j])
+                    l[i, j] = int(ntried/2)
             print(l)
 
     if len(instances) > 0:
-        raise ValueError("There Should be a solution")
-        return instances.popleft()
+        raise ValueError("Found No solution (try increasing MAX_ITERATION_COEFFICIENT)")
+        return instances.popleft(), get_ellapsed_string(start_time)
     raise ValueError("Ended with empty stack")

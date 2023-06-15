@@ -1,4 +1,5 @@
 from enum import Enum
+import time
 
 class AC(Enum):
     HORAIRE = 0
@@ -7,9 +8,15 @@ class AC(Enum):
     KILL = 3
     GARDE = 4
     CIVIL = 5
-    ENFILER = 6
-    COSTUME = 7
-    ARME = 8
+    COSTUME = 6
+    ARME = 7
+
+def get_ellapsed_string(start_time):
+    elapsed_time = time.time() - start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+    time_str = str(minutes)+'min '+str(seconds)+'s' if minutes > 0 else str(seconds)+'s'
+    return time_str
 
 def has_won(status, origin):
     # target killed + back to the starting location
@@ -56,9 +63,9 @@ def perform(hitman, action):
 
     elif action == AC.GARDE: status = hitman.neutralize_guard()
 
-    elif action == AC.COSTUME: status = hitman.take_suit()
-
-    elif action == AC.ENFILER: status = hitman.put_on_suit()
+    elif action == AC.COSTUME:
+        hitman.take_suit()
+        status = hitman.put_on_suit()
 
     elif action == AC.KILL: status = hitman.kill_target()
 

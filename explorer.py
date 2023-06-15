@@ -25,6 +25,7 @@ class MazeExplorer():
         self.history = []
         self.penalties = None
         self.referee = referee
+        self.status = None
 
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
@@ -35,10 +36,15 @@ class MazeExplorer():
     def getHistory(self):
         return self.history
 
-    def getActions(self, status, standing_on):
+    def getActions(self, grid):
         """
         renvoie l'espace des actions possibles (objets AC)
+
+        utilise self.status pour obtenir les informations
         """
+        pos = matrix_to_grid(self.status['position'], self.status['m'])
+        standing_on = grid[pos[0]][pos[1]]
+
         # 0, 1 : sont quasi toujours disponibles
         if self.spam_rotation > 1 or self.spam_rotation < -1: # non disponibles si deux fois consécutifs
             self.spam_rotation = 0
@@ -52,8 +58,8 @@ class MazeExplorer():
 
         # est en fonction de ce qui est directement en face de soi
 
-        vision = status['vision']
-        pos = status['position']
+        vision = self.status['vision']
+        pos = self.status['position']
 
         if len(vision) > 0: # if vision is empty
             object = vision[0][1] # vision = List[Tuple[(pos, object)]]
@@ -72,20 +78,20 @@ class MazeExplorer():
         # dépend de la case sur laquelle on se tient
 
         if standing_on == HC.PIANO_WIRE:
-            if not status['has_weapon']: # assuming we arn't changing the grid state
+            if not self.status['has_weapon']: # assuming we arn't changing the grid state
                 actions.append(AC.ARME)
         elif standing_on == HC.SUIT:
-            if not status['has_suit']:
+            if not self.status['has_suit']:
                 actions.append(AC.COSTUME)
 
         elif standing_on == HC.TARGET:
-            if status['has_weapon']:
+            if self.status['has_weapon']:
                 actions.append(AC.KILL)
 
         # toujours actif à partir de costume récupéré jusqu'à costume enfilé
         
-        if status['has_suit'] and not status['is_suit_on']:
-            actions.append(AC.ENFILER)
+        #if self.status['has_suit'] and not self.status['is_suit_on']:
+        #    actions.append(AC.ENFILER)
 
         return actions
 
@@ -116,9 +122,9 @@ class MazeExplorer():
         elif action == AC.GARDE:
             self.last_rotation = None
 
-        status = perform(self.referee, action)
+        self.status = perform(self.referee, action)
 
         # TO DO : wrapper l'erreur dans status...
 
-        self.penalties = status['penalties']
-        return status
+        self.penalties = self.status['penalties']
+        return self.status
