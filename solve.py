@@ -1,10 +1,11 @@
 from explorer import *
 import time
 
-# CONSTANTS
+# CONSTANT VALUES
 MAX_ITERATION_COEFFICIENT = 20 # sera multiplé par le nombre de cases
 # pour déterminer une limite d'exploration
 DISPLAY_EVERY_X_ITERATION = 100
+IGNORE_SUIT = True
 
 def tryout(actions, grid, origin):
     print(affichage(grid, matrix_to_grid(origin, len(grid))))
@@ -107,7 +108,7 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             # ELSE
             # verifie si ça vaut le coup de conserver l'array
 
-            state = make_state(status) # VIRER METHODES UTILITAIRES
+            state = make_state(status, IGNORE_SUIT) # VIRER METHODES UTILITAIRES
             pos = matrix_to_grid(status['position'], status['m'])
             if state not in heuristique_demi_trajet[pos[0]][pos[1]]: # pas déjà parcouru
                 # (score < stored_score) jamais le cas cas on
@@ -146,8 +147,8 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             l = np.zeros((len(grid), len(grid[0])), dtype=np.int8)
             for i in range(len(grid)):
                 for j in range(len(grid[0])):
-                    ntried = len(heuristique_demi_trajet[i][j])
-                    l[i, j] = int(ntried/2)
+                    ntried = len(heuristique_demi_trajet[i][j]) // 3
+                    l[i, j] = ntried
             print(l)
 
     if len(instances) > 0:

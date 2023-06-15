@@ -2,7 +2,7 @@ from solve import *
 
 #grid = [[0]]
 #while len(grid) < 22 or len(grid[0]) < 12:
-grid, starting = get_random_maze(max_size = 25)
+#grid, starting = get_random_maze(max_size = 25)
 
 from examples import giant_grid
 grid, starting = giant_grid, (21, 0)
@@ -21,3 +21,4 @@ origin = grid_to_matrix(starting, len(grid))
 penalties = calculate_penalties(result.history, grid, origin)
 
 print(f"solution found in {ellapsed}, ends up with {penalties} penalties")
+print(f"Using suit = {result.status['is_suit_on']}")

@@ -37,11 +37,17 @@ def matrix_to_grid(pos, height):
     """
     return height - 1 - pos[1], pos[0]
 
-def make_state(status): # transformer en lecteur de status
+def make_state(status, ignore_suit): # transformer en lecteur de status
     """
     renvoie un tuple formatté qui représente l'état de cette 
     instance pour comparer l'équivalence avec d'autres instances.
     """
+    if ignore_suit:
+        return (
+        status['orientation'],
+        status['has_weapon'],
+        status['is_target_down']
+    )
     return (
         status['orientation'],
         status['is_suit_on'],
