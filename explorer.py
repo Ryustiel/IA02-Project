@@ -68,7 +68,7 @@ class MazeExplorer():
                 actions.append(AC.GARDE)
 
             elif object in [HC.CIVIL_E, HC.CIVIL_N, HC.CIVIL_W, HC.CIVIL_S]:
-                actions.append
+                actions.append(AC.MOVE)
                 actions.append(AC.CIVIL)
 
             # 2 : autres objets bloquants (à part les gardes)

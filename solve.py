@@ -34,7 +34,7 @@ def calculate_penalties(actions, grid, origin):
 
 # ===================================================== SOLVER
 
-def solve(grid, starting): # STARTING IN MATRIX FORMAT
+def solve(grid, origin, ignore_suit=IGNORE_SUIT): # STARTING IN MATRIX FORMAT
     """
     Gère une file d'instances de jeu à différents niveaux d'avancement,
     recherche les fils des instances triées par minimum de pénalité.
@@ -42,7 +42,7 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
     Intègre une heuristique "pas repasser par le même état avec
     un score pire".
     """
-    origin = grid_to_matrix(starting, len(grid))
+    starting = matrix_to_grid(origin, len(grid))
     print(starting, origin)
 
     instances = deque()
@@ -60,11 +60,11 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
     # (orientation, has_suit, suit_on, has_weapon, target_down)
     # dérivée de a*
     # [orientations * etats]
-    heuristique_demi_trajet = []
+    heuristique_sans_repetition = []
     for i in range(len(grid)):
-        heuristique_demi_trajet.append(list())
+        heuristique_sans_repetition.append(list())
         for _ in range(len(grid[0])):
-            heuristique_demi_trajet[i].append(list())
+            heuristique_sans_repetition[i].append(list())
     
     MAX_ITERATION = MAX_ITERATION_COEFFICIENT * len(grid[0]) * len(grid)
     print("MAX_ITERATION :", MAX_ITERATION)
@@ -86,20 +86,20 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             # penalties mis à jour dans new_instance
 
             # MANIPULATION DES SCORES POUR L'EXPLORATION
-            if action == AC.HORAIRE or action == AC.ANTIHORAIRE:
-                new_instance.penalties += 1
+            #if action == AC.HORAIRE or action == AC.ANTIHORAIRE:
+                #new_instance.penalties += 1
                 # rotation coûte plus chère que avancer, mais pas trop
 
-            elif action == AC.ARME:
+            #elif action == AC.ARME:
                 # on enlève min_penalty à chaque fois que l'objectif est atteint
-                if heuristique_min_penalty_arme is None:
-                    heuristique_min_penalty_arme = new_instance.penalties
-                new_instance.penalties -= heuristique_min_penalty_arme
+                #if heuristique_min_penalty_arme is None:
+                    #heuristique_min_penalty_arme = new_instance.penalties
+                #new_instance.penalties -= heuristique_min_penalty_arme
 
-            elif action == AC.ARME:
-                if heuristique_min_penalty_kill is None:
-                    heuristique_min_penalty_kill = new_instance.penalties
-                new_instance.penalties -= heuristique_min_penalty_kill
+            #elif action == AC.ARME:
+                #if heuristique_min_penalty_kill is None:
+                    #heuristique_min_penalty_kill = new_instance.penalties
+                #new_instance.penalties -= heuristique_min_penalty_kill
 
             if done:
                 print("DONE")
@@ -108,12 +108,12 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             # ELSE
             # verifie si ça vaut le coup de conserver l'array
 
-            state = make_state(status, IGNORE_SUIT) # VIRER METHODES UTILITAIRES
+            state = make_state(status, ignore_suit) # VIRER METHODES UTILITAIRES
             pos = matrix_to_grid(status['position'], status['m'])
-            if state not in heuristique_demi_trajet[pos[0]][pos[1]]: # pas déjà parcouru
+            if state not in heuristique_sans_repetition[pos[0]][pos[1]]: # pas déjà parcouru
                 # (score < stored_score) jamais le cas cas on
                 # parcours du plus petit au plus grand score 
-                heuristique_demi_trajet[pos[0]][pos[1]].append(state)
+                heuristique_sans_repetition[pos[0]][pos[1]].append(state)
 
                 # ajouter à la file en triant
 
@@ -131,7 +131,8 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
                     instances.append(new_instance)
 
             # else : #ne pas récupérer les enfants parce qu'on en arrive à un état déjà parcouru
-                
+
+        # note : la référence à l'instance maze est perdue à ce moment (mémoire)
         MAX_ITERATION -= 1
 
         # TRACKING
@@ -147,7 +148,7 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
             l = np.zeros((len(grid), len(grid[0])), dtype=np.int8)
             for i in range(len(grid)):
                 for j in range(len(grid[0])):
-                    ntried = len(heuristique_demi_trajet[i][j]) // 3
+                    ntried = len(heuristique_sans_repetition[i][j]) // 3
                     l[i, j] = ntried
             print(l)
 
@@ -155,3 +156,12 @@ def solve(grid, starting): # STARTING IN MATRIX FORMAT
         raise ValueError("Found No solution (try increasing MAX_ITERATION_COEFFICIENT)")
         return instances.popleft(), get_ellapsed_string(start_time)
     raise ValueError("Ended with empty stack")
+
+
+def solve_phase1():
+    """
+    runs the exact same algorithm as solve_phase2, 
+    except that it won't be initializing a referee,
+    but a starting instance of MazeUncoverer
+    """
+    ...
