@@ -1,4 +1,5 @@
 from explorer import *
+from explorer1 import *
 import time
 
 # CONSTANT VALUES
@@ -158,10 +159,79 @@ def solve(grid, origin, ignore_suit=IGNORE_SUIT): # STARTING IN MATRIX FORMAT
     raise ValueError("Ended with empty stack")
 
 
-def solve_phase1():
+def find_path(grid, origin):
     """
     runs the exact same algorithm as solve_phase2, 
     except that it won't be initializing a referee,
     but a starting instance of MazeUncoverer
     """
+    starting = matrix_to_grid(origin, len(grid))
+    print(starting, origin)
+
+    instances = deque()
+
+    maze = MazeUncoverer()
+    maze.status = maze.referee.start_phase2() # init value of STATUS
+    instances.appendleft(maze) # élément initial
+
+    heuristique_sans_repetition_bool = []
+    for i in range(len(grid)):
+        heuristique_sans_repetition_bool.append(list())
+        for _ in range(len(grid[0])):
+            heuristique_sans_repetition_bool[i].append(False)
+    
+    MAX_ITERATION = MAX_ITERATION_COEFFICIENT * len(grid[0]) * len(grid)
+    print("MAX_ITERATION :", MAX_ITERATION)
+    start_time = time.time()
+
+    while MAX_ITERATION > 0 and len(instances) > 0:
+
+        maze = instances.popleft()
+
+        for action in maze.getActions(grid):
+
+            new_instance = deepcopy(maze)
+            new_instance.branch(action)
+            done = new_instance.foundUnknown()
+
+            if done:
+                print("DONE")
+                return new_instance, get_ellapsed_string(start_time)
+
+            # ELSE
+            # verifie si ça vaut le coup de conserver l'array
+
+            pos = new_instance.pos
+            if not heuristique_sans_repetition_bool[pos[0]][pos[1]]: # pas déjà parcouru
+                heuristique_sans_repetition_bool[pos[0]][pos[1]] = True
+
+                # ajouter à la file en triant
+
+                i = 0
+                l = len(instances)
+                while i < l:
+                    if instances[i].penalties >= new_instance.penalties: 
+                        # ON VEUT MINIMISER PENALTIES
+                        # si score plus grand insérer
+                        # ou égal pour éviter de parcourir les == pour rien
+                        instances.insert(i, new_instance)
+                        break
+                    i += 1
+                if i == l:
+                    instances.append(new_instance)
+
+            # else : #ne pas récupérer les enfants parce qu'on en arrive à un état déjà parcouru
+
+        # note : la référence à l'instance maze est perdue à ce moment (mémoire)
+        MAX_ITERATION -= 1
+
+    if len(instances) > 0:
+        raise ValueError("Found No solution (try increasing MAX_ITERATION_COEFFICIENT)")
+        return instances.popleft(), get_ellapsed_string(start_time)
+    raise ValueError("Ended with empty stack")
+
+
+def solve_phase1(grid, origin):
+    # atteint les cases inconnues et s'arrête lorsqu'une case est atteinte
+    
     ...

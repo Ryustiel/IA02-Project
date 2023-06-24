@@ -40,7 +40,7 @@ class MazeUncoverer():
 
     # INTERNAL REP
 
-    def isFullyDone(self):
+    def isDone(self):
         """
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
@@ -51,7 +51,7 @@ class MazeUncoverer():
             ... # update test here if inatteignables
         return test
 
-    def isDone(self):
+    def foundUnknown(self):
         """
         returns True si une inconnue est entré dans le champ de vision (faced)
         """
@@ -67,7 +67,7 @@ class MazeUncoverer():
         """
         offset = self.pos
 
-        case = HC.WALL # out of bounds option
+        case = None # out of bounds option
 
         for i in range(3):
         
@@ -148,12 +148,25 @@ class MazeUncoverer():
             if vision not in BLOCKING: # is otherwise walkable
                 actions.append(AC.MOVE)
 
-        # toujours actif à partir de costume récupéré jusqu'à costume enfilé
-        
-        #if self.status['has_suit'] and not self.status['is_suit_on']:
-        #    actions.append(AC.ENFILER)
-
         return actions
+    
+    def perform(self, action):
+        if action == AC.HORAIRE:
+            if self.orientation == HC.N: self.orientation = HC.E
+            elif self.orientation == HC.E: self.orientation = HC.S
+            elif self.orientation == HC.S: self.orientation = HC.W
+            elif self.orientation == HC.W: self.orientation = HC.N
+        elif action == HC.ANTIHORAIRE:
+            if self.orientation == HC.N: self.orientation = HC.W
+            elif self.orientation == HC.W: self.orientation = HC.S
+            elif self.orientation == HC.S: self.orientation = HC.E
+            elif self.orientation == HC.E: self.orientation = HC.N
+        elif action == HC.MOVE:
+            # validité de l'action déjà vérifiée
+            if self.orientation == HC.N: self.pos = (self.pos[0] + 1, self.pos[1])
+            elif self.orientation == HC.S: self.pos = (self.pos[0] - 1, self.pos[1])
+            elif self.orientation == HC.E: self.pos = (self.pos[0], self.pos[1] + 1)
+            elif self.orientation == HC.W: self.pos = (self.pos[0], self.pos[1]- 1)
 
     def branch(self, action: AC): # ret status, bool
         """
