@@ -8,11 +8,10 @@ from collections import Enum
 
 class HCL(HC):
     UNKNOWN = 99 # very high value
-    WALKABLE = 98
 
 MAX_VISION = 3 # en nombre de cases
 BLOCKING = [HCL.WALL, HCL.GUARD_E, HCL.GUARD_N, HCL.GUARD_S, HCL.GUARD_W]
-UNKNOWN = [HCL.UNKNOWN, HCL.WALKABLE]
+UNKNOWN = [HCL.UNKNOWN]
 
 class MazeUncoverer():
     """
@@ -24,7 +23,7 @@ class MazeUncoverer():
         initialise et sauvegarde la grille de jeu pour l'exploration
         """
         # TRACKING        
-        self.history = []
+        self.history = [] # local history : les actions depuis le point jusqu'à l'arrivée
         self.penalties = 0
 
         self.interal = np.full((n, m), HCL.UNKNOWN) # internal grid
@@ -61,21 +60,37 @@ class MazeUncoverer():
                 return True
         return False
 
-    def getVision(self, offset=None, remaining=MAX_VISION-1):
+    def getVision(self):
         """
         returns le type de case dans le champ de vision.
         (n'oublions pas que le champ de vision s'arrête à la première case)
         """
-        if remaining < 1:
-            return None # out of bounds and nothing new
+        offset = self.pos
+
+        case = HC.WALL # out of bounds option
+
+        for i in range(3):
         
-        if offset is None:
-            offset = self.pos
-        
-        # updating offset
-        if self.orientation == HCL.N:
-            offset[0] += 1
-        ...
+            # updating offset
+            if self.orientation == HC.N:
+                offset[0] += 1
+            elif self.oriantation == HC.S:
+                offset[0] -= 1
+            elif self.orientation == HC.E:
+                offset[1] += 1 # est c'est vers la droite
+            else:
+                offset[1] -= 1
+            
+            if (offset[0] >= 0 and offset[1] >= 0
+                and offset[0] < self.n and offset[1] < self.m):
+
+                case = self.internal(offset)
+                if case != HC.EMPTY: # if is empty case
+                    return case
+
+            else: break
+
+        return case
 
 
     def updatePenalties(self):
