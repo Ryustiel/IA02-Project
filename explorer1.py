@@ -90,6 +90,26 @@ class MazeUncoverer():
 
 
     def updatePenalties(self):
+        
+        vueGarde=False
+        for i in range(-2,0):
+            if carte[self.pos[0]+i]==4:
+                vueGarde=True
+
+        for i in range(1,3):
+            if carte[self.pos[0]+i]==6:
+                vueGarde=True
+
+        for i in range(-2,0):
+            if carte[self.pos[1]+i]==5:
+                vueGarde=True
+
+        for i in range(1,3):
+            if carte[self.pos[1]+i]==3:
+                vueGarde=True
+
+        if vueGarde:
+            self.penalties+=5
         """
         augmente la pénalité en fonction de l'état du joueur :
         * check si il est vu par un garde
@@ -99,6 +119,9 @@ class MazeUncoverer():
         ... # is in guard range ?
 
     def updateFromStatus(self, status):
+        #i=0
+        #if self.orientation==HC.N:
+            #while self.pos[1]+i!=self.getVision()[1]
         """
         updates the matrix from the status
         """
