@@ -359,7 +359,6 @@ def PersConnuDansZone(pos):
 
 
 def scaner(pos, grille, ecoute):
-    nbPers = hitman.__get_listening()
     dejaVu = ConnuDansZone(pos)#on ne parcours pas les cases dans laquelle on sait déja ce qu'il y a
     persConnu = PersConnuDansZone(pos)
     nbPersUnk = nbPers-len(persConnu)
@@ -416,7 +415,7 @@ def scaner(pos, grille, ecoute):
                                                                                                             if (pos[0]+l4,pos[1]+m4) not in dejaVu:
                                                                                                                 for n4 in range(n4, 11):
                                                                                                                     if var+13*l4+13*13*m4+n4 != var+13*l3+13*13*m3+n3:
-                                                                                                                        clauseUnique =                                                                                                       [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]
+                                                                                                                        clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]                                                                                                      [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]
                                                                                                                         if clauseUnique not in dimacs.Clauses:
                                                                                                                             dimacsClauses.append(clauseUnique)
             if clauseAtLeast not in dimacsClauses:
