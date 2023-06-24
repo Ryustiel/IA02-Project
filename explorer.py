@@ -1,8 +1,5 @@
 from testing2.hitman2 import *
 import numpy as np
-from generateur import get_random_maze, affichage
-from copy import copy, deepcopy
-from collections import deque
 from utilities import *
 
 MAX_SIZE = 10

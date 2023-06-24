@@ -1,5 +1,8 @@
 from explorer import *
 from explorer1 import *
+from copy import deepcopy
+from collections import deque
+from generateur import affichage
 import time
 
 # CONSTANT VALUES
@@ -233,5 +236,7 @@ def find_path(grid, origin):
 
 def solve_phase1(grid, origin):
     # atteint les cases inconnues et s'arrête lorsqu'une case est atteinte
+    knowledge = np.full((len(grid), len(grid[0])), HC.UNKNOWN)
     
+
     ...

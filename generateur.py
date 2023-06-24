@@ -32,30 +32,32 @@ def affichage(grille, pos):
         for j in range (len(grille[i])):
             if grille[i][j]==HC.EMPTY:
                 affic[i][j]='.'
-            if grille[i][j]==HC.WALL:
+            elif grille[i][j]==HC.WALL:
                 affic[i][j]='|'
-            if grille[i][j]==HC.GUARD_N:
+            elif grille[i][j]==HC.GUARD_N:
                 affic[i][j]='N'
-            if grille[i][j]==HC.GUARD_E:
+            elif grille[i][j]==HC.GUARD_E:
                 affic[i][j]='E'
-            if grille[i][j]==HC.GUARD_S:
+            elif grille[i][j]==HC.GUARD_S:
                 affic[i][j]='S'
-            if grille[i][j]==HC.GUARD_W:
+            elif grille[i][j]==HC.GUARD_W:
                 affic[i][j]='W'
-            if grille[i][j]==HC.CIVIL_N:
+            elif grille[i][j]==HC.CIVIL_N:
                 affic[i][j]='n'
-            if grille[i][j]==HC.CIVIL_E:
+            elif grille[i][j]==HC.CIVIL_E:
                 affic[i][j]='e'
-            if grille[i][j]==HC.CIVIL_S:
+            elif grille[i][j]==HC.CIVIL_S:
                 affic[i][j]='s'
-            if grille[i][j]==HC.CIVIL_W:
+            elif grille[i][j]==HC.CIVIL_W:
                 affic[i][j]='w'
-            if grille[i][j]==HC.TARGET:
+            elif grille[i][j]==HC.TARGET:
                 affic[i][j]='X'
-            if grille[i][j]==HC.SUIT:
+            elif grille[i][j]==HC.SUIT:
                 affic[i][j]='D'
-            if grille[i][j]==HC.PIANO_WIRE:
+            elif grille[i][j]==HC.PIANO_WIRE:
                 affic[i][j]='A'
+            if grille[i][j]==HC.UNKNOWN:
+                affic[i][j]='?'
 
     affic[pos[0]][pos[1]] = '&'
     s = ""

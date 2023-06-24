@@ -76,6 +76,7 @@ class HC(Enum):
     E = 15
     S = 16
     W = 17
+    UNKNOWN = 99
 
 
 # Provisoire...

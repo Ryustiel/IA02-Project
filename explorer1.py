@@ -1,24 +1,16 @@
 from testing2.hitman2 import *
 import numpy as np
-from generateur import get_random_maze, affichage
-from copy import copy, deepcopy
-from collections import deque
 from utilities import *
-from collections import Enum
-
-class HCL(HC):
-    UNKNOWN = 99 # very high value
 
 MAX_VISION = 3 # en nombre de cases
-BLOCKING = [HCL.WALL, HCL.GUARD_E, HCL.GUARD_N, HCL.GUARD_S, HCL.GUARD_W]
-UNKNOWN = [HCL.UNKNOWN]
+BLOCKING = [HC.WALL, HC.GUARD_E, HC.GUARD_N, HC.GUARD_S, HC.GUARD_W]
 
 class MazeUncoverer():
     """
     Contient une représentation du jeu limitée aux données que le joueur a.
     Peut trouver un chemin vers la première case à découvrir.
     """
-    def __init__(self, n, m, start_pos = (0, 0)):
+    def __init__(self, internal, start_pos = (0, 0)):
         """
         initialise et sauvegarde la grille de jeu pour l'exploration
         """
@@ -26,13 +18,13 @@ class MazeUncoverer():
         self.history = [] # local history : les actions depuis le point jusqu'à l'arrivée
         self.penalties = 0
 
-        self.interal = np.full((n, m), HCL.UNKNOWN) # internal grid
-        self.n = n
-        self.m = m
+        self.internal = internal # internal grid
+        self.n = len(internal)
+        self.m = len(internal[0])
         self.pos = start_pos # grid_format
-        self.orientation = AC.N
+        self.orientation = HC.N
 
-        self.internal[start_pos] = HCL.EMPTY
+        self.internal[start_pos] = HC.EMPTY
 
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
@@ -45,7 +37,7 @@ class MazeUncoverer():
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
         """
-        test = np.all(self.internal not in UNKNOWN)
+        test = np.all(self.internal != HC.UNKNOWN)
         if not test:
             # TESTER si les coins sont inatteignables aussi <==<==
             ... # update test here if inatteignables
@@ -56,7 +48,7 @@ class MazeUncoverer():
         returns True si une inconnue est entré dans le champ de vision (faced)
         """
         if self.getVision() is not None:
-            if self.getVision() == HCL.UNKNOWN:
+            if self.getVision() == HC.UNKNOWN:
                 return True
         return False
 
@@ -67,30 +59,34 @@ class MazeUncoverer():
         """
         offset = self.pos
 
-        case = None # out of bounds option
+        cases = [] # out of bounds option
 
         for i in range(3):
         
             # updating offset
             if self.orientation == HC.N:
-                offset[0] += 1
-            elif self.oriantation == HC.S:
-                offset[0] -= 1
+                offset = (offset[0] - 1, offset[1])
+            elif self.orientation == HC.S:
+                offset = (offset[0] + 1, offset[1])
             elif self.orientation == HC.E:
-                offset[1] += 1 # est c'est vers la droite
+                offset = (offset[0], offset[1] + 1) # est c'est vers la droite
             else:
-                offset[1] -= 1
+                offset = (offset[0], offset[1] - 1)
             
             if (offset[0] >= 0 and offset[1] >= 0
                 and offset[0] < self.n and offset[1] < self.m):
 
-                case = self.internal(offset)
+                case = self.internal[offset]
+                cases.append(case)
                 if case != HC.EMPTY: # if is empty case
-                    return case
+                    break
 
-            else: break
+            else:
+                break
 
-        return case
+        if len(cases) == 0:
+            return None
+        return cases
 
 
     def updatePenalties(self):
@@ -108,9 +104,6 @@ class MazeUncoverer():
         """
         # récupère la vision et l'intègre à la grille en checkant si ce n'est pas
         # déjà dedans
-        ...
-
-    def updateFromSAT(self):
         ...
 
     # GETTERS
@@ -140,6 +133,7 @@ class MazeUncoverer():
         # est en fonction de ce qui est directement en face de soi
 
         vision = self.getVision()
+        print("POS", self.pos, "ORIENT", self.orientation, "VISION", vision)
         # + self.pos
 
         if vision is not None: # not out of bounds
@@ -156,12 +150,12 @@ class MazeUncoverer():
             elif self.orientation == HC.E: self.orientation = HC.S
             elif self.orientation == HC.S: self.orientation = HC.W
             elif self.orientation == HC.W: self.orientation = HC.N
-        elif action == HC.ANTIHORAIRE:
+        elif action == AC.ANTIHORAIRE:
             if self.orientation == HC.N: self.orientation = HC.W
             elif self.orientation == HC.W: self.orientation = HC.S
             elif self.orientation == HC.S: self.orientation = HC.E
             elif self.orientation == HC.E: self.orientation = HC.N
-        elif action == HC.MOVE:
+        elif action == AC.MOVE:
             # validité de l'action déjà vérifiée
             if self.orientation == HC.N: self.pos = (self.pos[0] + 1, self.pos[1])
             elif self.orientation == HC.S: self.pos = (self.pos[0] - 1, self.pos[1])
