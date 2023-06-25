@@ -172,13 +172,19 @@ def scaner(pos, grille, ecoute):
                 write_dimacs_file("dimacs.cnf", dimacsClauses2)
                 if run_gophersat("dimacs.cnf") == False:#si le modèle est insatidfiable, cela signifie que la variable est forcément à VRAI
                     dimacsClauses.append([i])
-                    c=var_to_case(var)
+                    c=var_to_case(i)
                     grille[c[0]][c[1]]=c[2]
                     for k in range(0,14):
                         var=i-i%13+k-1
                         if var != i and [-var] not in dimacsClauses:
                             dimacsClauses.append([-var])#on met les autres types de cases possibles pour cette case à faux
-                            
+                else:
+                    dimacsClauses3=deepcopy(dimacsClauses)
+                    dimacsClause3.append(i)
+                    write_dimacs_file("dimacs.cnf", dimacsClauses3)
+                    if run_gophersat("dimacs.cnf") == False:# on refait la meme chose avec la variable positive, si l'ajout de la variable positive rends le modèle insatidfiable, cela signifie que la variable est forcément à FAUX
+                        dimacsClauses.append([-i])
+                                
 
 
 
