@@ -175,33 +175,47 @@ def scaner(pos, grille, ecoute):
                                                                                                                         clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]                                                                                                      [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]
                                                                                                                         if clauseUnique not in dimacsClauses:
                                                                                                                             dimacsClauses.append(clauseUnique)
-            if clauseAtLeast not in dimacsClauses:
-                dimacsClauses.append(clauseAtLeast)
-            aTester=[]
-            for i in dimacsClauses:
-                if len(i)>1:
-                    for j in i:
-                        if abs(j) not in aTester and [j] not in dimacsClauses:
-                            aTester.append(abs(j))#pour chaque variable pour laquelle on a une information, on va tester si on peut déduire qu'elle est à VRAI
-            for i in aTester:
-                dimacsClauses2=deepcopy(dimacsClauses)
-                dimacsClauses2.append(-i)#on créé une autre base de clauses dans laquelle on ajoute la négation de la variable à tester
-                write_dimacs_file("dimacs.cnf", dimacsClauses2)
-                if run_gophersat("dimacs.cnf") == False:#si le modèle est insatidfiable, cela signifie que la variable est forcément à VRAI
-                    dimacsClauses.append([i])
-                    c=var_to_case(i)
-                    grille[c[0]][c[1]]=c[2]
-                    for k in range(0,14):
-                        var=i-i%13+k-1
-                        if var != i and [-var] not in dimacsClauses:
-                            dimacsClauses.append([-var])#on met les autres types de cases possibles pour cette case à faux
-                else:
-                    dimacsClauses3=deepcopy(dimacsClauses)
-                    dimacsClause3.append(i)
-                    write_dimacs_file("dimacs.cnf", dimacsClauses3)
-                    if run_gophersat("dimacs.cnf") == False:# on refait la meme chose avec la variable positive, si l'ajout de la variable positive rends le modèle insatidfiable, cela signifie que la variable est forcément à FAUX
-                        dimacsClauses.append([-i])
-                                
+        if clauseAtLeast not in dimacsClauses:
+            dimacsClauses.append(clauseAtLeast)
+    aTester=[]
+    for i in dimacsClauses:
+        if len(i)>1:
+            for j in i:
+                if abs(j) not in aTester and [j] not in dimacsClauses:
+                    aTester.append(abs(j))#pour chaque variable pour laquelle on a une information, on va tester si on peut déduire qu'elle est à VRAI
+    for i in aTester:
+        dimacsClauses2=deepcopy(dimacsClauses)
+        dimacsClauses2.append(-i)#on créé une autre base de clauses dans laquelle on ajoute la négation de la variable à tester
+        write_dimacs_file("dimacs.cnf", dimacsClauses2)
+        if run_gophersat("dimacs.cnf") == False:#si le modèle est insatidfiable, cela signifie que la variable est forcément à VRAI
+            dimacsClauses.append([i])
+            c=var_to_case(i)
+            grille[c[0]][c[1]]=c[2]
+            for k in range(0,14):
+                var=i-i%13+k-1
+                if var != i and [-var] not in dimacsClauses:
+                    dimacsClauses.append([-var])#on met les autres types de cases possibles pour cette case à faux
+        else:
+            dimacsClauses3=deepcopy(dimacsClauses)
+            dimacsClause3.append(i)
+            write_dimacs_file("dimacs.cnf", dimacsClauses3)
+            if run_gophersat("dimacs.cnf") == False:# on refait la meme chose avec la variable positive, si l'ajout de la variable positive rends le modèle insatidfiable, cela signifie que la variable est forcément à FAUX
+                dimacsClauses.append([-i])
+    modele=run_gophersat("dimacs.cnf")
+    negation=[]
+    for i in range(len(modele)):
+        negation[i]=(-modele[i])
+    dimacs2= deepcopy(dimacsClauses)
+    dimacs2.append(negation)
+    dimacs_write("dimacs.cnf", dimacs)
+    if run_gophersat():
+        return False
+    else:
+        for i in modele:
+            if i>0 and [i] not in dimacsClauses:
+                case=var_to_case(i)
+                grille[case[0]][case[1]]=case[2]
+        return True             
 
 
 
