@@ -38,33 +38,17 @@ class MazeUncoverer():
     # INTERNAL REP
 
     def isDone(self):
-        dimacs_write("dimacs.cnf",dimacsClauses)
-        modele=run_gophersat("dimacs.cnf")
-        negation=[]
-        for i in range(len(modele)):
-            negation[i]=(-modele[i])
-        dimacs2= deepcopy(dimacsClauses)
-        dimacs2.append(negation)
-        dimacs_write("dimacs.cnf", dimacs)
-        if run_gophersat():
-            return False
-        else:
-            for i in modele:
-                if i>0 and [i] not in dimacsClauses:
-                    case=var_to_case(i)
-                    self.internal[case[0]][case[1]]=case[2]
-            
-            return False        """
+               """
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
         """
-        """
+        
         test = np.all(self.internal != HC.UNKNOWN)
         if not test:
             # TESTER si les coins sont inatteignables aussi <==<==
             ... # update test here if inatteignables
         return test
-        """
+        
 
     def foundUnknown(self, vision=None):
         """

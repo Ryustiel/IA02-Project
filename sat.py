@@ -11,9 +11,26 @@ import subprocess
 from copy import deepcopy
 
 
+"""
+def fini()
+    dimacs_write("dimacs.cnf",dimacsClauses)
+            modele=run_gophersat("dimacs.cnf")
+            negation=[]
+            for i in range(len(modele)):
+                negation[i]=(-modele[i])
+            dimacs2= deepcopy(dimacsClauses)
+            dimacs2.append(negation)
+            dimacs_write("dimacs.cnf", dimacs)
+            if run_gophersat():
+                return False
+            else:
+                for i in modele:
+                    if i>0 and [i] not in dimacsClauses:
+                        case=var_to_case(i)
+                        self.internal[case[0]][case[1]]=case[2]
+                return True 
 
-
-
+"""
 
 
 
