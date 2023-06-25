@@ -29,6 +29,7 @@ class MazeUncoverer():
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
         self.spam_rotation = 0 # previent les tours complets
+        initialize()#on initialise le fichier cnf
 
     # INTERNAL REP
 
@@ -93,6 +94,26 @@ class MazeUncoverer():
 
 
     def updatePenalties(self):
+        
+        vueGarde=False
+        for i in range(-2,0):
+            if self.internal[self.pos[0]+i]==4:
+                vueGarde=True
+
+        for i in range(1,3):
+            if self.internal[self.pos[0]+i]==6:
+                vueGarde=True
+
+        for i in range(-2,0):
+            if self.internal[self.pos[1]+i]==5:
+                vueGarde=True
+
+        for i in range(1,3):
+            if self.internal[self.pos[1]+i]==3:
+                vueGarde=True
+
+        if vueGarde:
+            self.penalties+=5
         """
         augmente la pénalité en fonction de l'état du joueur :
         * check si il est vu par un garde
@@ -102,11 +123,28 @@ class MazeUncoverer():
         ... # is in guard range ?
 
     def updateFromStatus(self, status):
+        i=0
+        vue=self.getVision()
+        if self.orientation==HC.N:
+            while self.pos[1]+i!=vue[1]:#tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
+                i+=1
+        if self.orientation==HC.S:
+            while self.pos[1]+i!=vue[1]:
+                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
+                i-=1
+        if self.orientation==HC.E:
+            while self.pos[0]+i!=vue[0]:
+                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
+                i+=1
+        if self.orientation==HC.W:
+            while self.pos[0]+i!=vue[0]:
+                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
+                i-=1
+        self.internal[vue[0]][vue[1]]=vue[2]
         """
         updates the matrix from the status
-        """
-        # récupère la vision et l'intègre à la grille en checkant si ce n'est pas
-        # déjà dedans
+    """
         ...
 
     # GETTERS
