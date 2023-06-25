@@ -12,7 +12,10 @@ grid, starting = giant_grid, (21, 0)
 # grid, starting = world_example, (5, 0)
 
 origin = grid_to_matrix(starting, len(grid))
-result, ellapsed = solve(grid, origin, ignore_suit=False)
+referee = HitmanReferee(grid, origin) # A ETE MODIFIE FAUTE DE MECANISME D'IMPORT DE FICHIER
+# le referee doit exister à l'extérieur de solve (multiphases)
+
+result, ellapsed = solve(referee, grid, origin, ignore_suit=False)
 
 # et là il va falloir utiliser les instructions, tester le tout
 print("================= RESULTS =================")

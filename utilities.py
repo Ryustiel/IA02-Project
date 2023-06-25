@@ -41,6 +41,7 @@ def make_state(status, ignore_suit): # transformer en lecteur de status
     """
     renvoie un tuple formatté qui représente l'état de cette 
     instance pour comparer l'équivalence avec d'autres instances.
+    Pour la phase 2
     """
     if ignore_suit:
         return (
@@ -54,6 +55,14 @@ def make_state(status, ignore_suit): # transformer en lecteur de status
         status['has_weapon'],
         status['is_target_down']
     )
+
+def make_state_phase1(maze_uncoverer):
+    """
+    identique à make_state, pour la phase 1
+    il n'y a que l'orientation qui est vraiment différente
+    entre les différents états du personnage
+    """
+    return maze_uncoverer.orientation
 
 def perform(hitman, action):
     status = None
