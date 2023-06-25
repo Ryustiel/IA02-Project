@@ -262,7 +262,12 @@ class MazeUncoverer():
                 actions.append(AC.MOVE)
 
         return actions
-    
+    def grilleToDico(self):
+        dico={}
+        for i in range self.n:
+            for j in range self.m:
+                dico[(i,j)]=self.internal[i][j]
+        return dico
     def perform(self, action):
         if action == AC.HORAIRE:
             if self.orientation == HC.N: self.orientation = HC.E
