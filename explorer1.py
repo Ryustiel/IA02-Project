@@ -4,7 +4,7 @@ from utilities import *
 from sat import *
 MAX_VISION = 3 # en nombre de cases
 BLOCKING = [HC.WALL, HC.GUARD_E, HC.GUARD_N, HC.GUARD_S, HC.GUARD_W]
-
+dimacsClauses=[]
 
 class MazeUncoverer():
     """
@@ -164,21 +164,56 @@ class MazeUncoverer():
         vue=self.getVision()
         if self.orientation==HC.N:
             while self.pos[1]+i!=vue[1]:#tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
-                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
+                self.internal[self.pos[0]][self.pos[1]+i]=HC.EMPTY
+                var=case_to_variable((self.pos[0],self.pos[1]+i), HC.EMPTY)
+                if var not in dimacsClauses:
+                    dimacsClauses.append([var])
+                    for k in range(0,14):
+                        var2=var-var%13+k-1
+                        if var2 != var and [-var2] not in dimacsClauses:
+                            dimacsClauses.append([-var2])
                 i+=1
         if self.orientation==HC.S:
             while self.pos[1]+i!=vue[1]:
-                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
+                self.internal[self.pos[0]][self.pos[1]+i]=HC.EMPTY
+                var=case_to_variable((self.pos[0],self.pos[1]+i), HC.EMPTY)
+                if var not in dimacsClauses:
+                    dimacsClauses.append([var])
+                    for k in range(0,14):
+                        var2=var-var%13+k-1
+                        if var2 != var and [-var2] not in dimacsClauses:
+                            dimacsClauses.append([-var2])
                 i-=1
         if self.orientation==HC.E:
             while self.pos[0]+i!=vue[0]:
-                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
+                self.internal[self.pos[0]+i][self.pos[1]]=HC.EMPTY
+                var=case_to_variable((self.pos[0]+i,self.pos[1]), HC.EMPTY)
+                if var not in dimacsClauses:
+                    dimacsClauses.append([var])
+                    for k in range(0,14):
+                        var2=var-var%13+k-1
+                        if var2 != var and [-var2] not in dimacsClauses:
+                            dimacsClauses.append([-var2])
                 i+=1
         if self.orientation==HC.W:
             while self.pos[0]+i!=vue[0]:
-                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
+                self.internal[self.pos[0]+i][self.pos[1]]=HC.EMPTY
+                var=case_to_variable((self.pos[0]+i,self.pos[1]), HC.EMPTY)
+                if var not in dimacsClauses:
+                    dimacsClauses.append([var])
+                    for k in range(0,14):
+                        var2=var-var%13+k-1
+                        if var2 != var and [-var2] not in dimacsClauses:
+                            dimacsClauses.append([-var2])
                 i-=1
         self.internal[vue[0]][vue[1]]=vue[2]
+        var=case_to_variable(vue)
+        if var not in dimacsClauses:
+            dimacsClauses.append([var])
+            for k in range(0,14):
+                var2=var-var%13+k-1
+                if var2 != var and [-var2] not in dimacsClauses:
+                    dimacsClauses.append([-var2])
         """
         updates the matrix from the status
         """

@@ -11,7 +11,7 @@ import subprocess
 from copy import deepcopy
 
 
-dimacsClauses=[]
+
 
 
 
@@ -55,7 +55,7 @@ def initialize(n,m):
         dimacsClauses.append(clause13)
 
 def case_to_variable(case, val):
-    return 1+ val + 13*case[0] + 13*13*case[1]
+    return val + 13*case[0] + 13*13*case[1]
 
 def dimacs_write(filename, dimacs):
     f=open(filename, "w")
@@ -80,12 +80,12 @@ def run_gophersat(filename):
 
 
 def var_to_case(var):
-    typ=var%13-1
+    typ=var%13
     if typ==0:
         typ=13
     case=var-typ
     i=0
-    while case%(13*13)!=1:
+    while case%(13*13)!=0:
         i+=1
         case-=13
     j=case//(13*13)
@@ -95,7 +95,7 @@ def ConnuDansZone(pos,grille):
     dejaVu=[]
     for i in range(-2,3):
         for j in range(-2,3):
-            if grille[pos[0]+i][pos[1]+j)]==HC.UNKNOWN:
+            if grille[pos[0]+i][pos[1]+j)]!=HC.UNKNOWN:
                 dejaVu.append((pos[0]+i, pos[1]+j))
     return dejaVu
 
@@ -138,7 +138,7 @@ def scaner(pos, grille, ecoute):
                                             if var!=var+13*l+13*13*m+n:
                                                 if nbPersUnk==1:
                                                     clauseUnique=[-var, -(var+13*l+13*13*m+n)]
-                                                    if clauseUnique not in dimacs.Clauses:
+                                                    if clauseUnique not in dimacsClauses:
                                                         dimacsClauses.append(clauseUnique)
                                                 else:
                                                     for l2 in range(l,3):
@@ -148,7 +148,7 @@ def scaner(pos, grille, ecoute):
                                                                     if var+13*l+13*13*m+n != var+13*l2+13*13*m2+n2: #dans les autres cas, il y a pour chaque variable, non(cette variable) ou non(une autre variable) ou non(encore une autre variable)
                                                                         if nbPersUnk==2:
                                                                             clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2)]
-                                                                            if clauseUnique not in dimacs.Clauses:
+                                                                            if clauseUnique not in dimacsClauses:
                                                                                 dimacsClauses.append(clauseUnique)
                                                                         else:
                                                                             for l3 in range(l2,3):
@@ -158,7 +158,7 @@ def scaner(pos, grille, ecoute):
                                                                                             if var+13*l2+13*13*m2+n2 != var+13*l3+13*13*m3+n3:
                                                                                                 if nbPersUnk==3:
                                                                                                     clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3)]
-                                                                                                    if clauseUnique not in dimacs.Clauses:
+                                                                                                    if clauseUnique not in dimacsClauses:
                                                                                                         dimacsClauses.append(clauseUnique)
                                                                                                 else:
                                                                                                     for l4 in range(l2,3):
@@ -167,7 +167,7 @@ def scaner(pos, grille, ecoute):
                                                                                                                 for n4 in range(n4, 11):
                                                                                                                     if var+13*l4+13*13*m4+n4 != var+13*l3+13*13*m3+n3:
                                                                                                                         clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]                                                                                                      [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2), -(var+13*l3+13*13*m3+n3), -(var+13*l4+13*13*m4+n4)]
-                                                                                                                        if clauseUnique not in dimacs.Clauses:
+                                                                                                                        if clauseUnique not in dimacsClauses:
                                                                                                                             dimacsClauses.append(clauseUnique)
             if clauseAtLeast not in dimacsClauses:
                 dimacsClauses.append(clauseAtLeast)
@@ -175,7 +175,7 @@ def scaner(pos, grille, ecoute):
             for i in dimacsClauses:
                 if len(i)>1:
                     for j in i:
-                        if abs(j) not in aTester:
+                        if abs(j) not in aTester and [j] not in dimacsClauses:
                             aTester.append(abs(j))#pour chaque variable pour laquelle on a une information, on va tester si on peut déduire qu'elle est à VRAI
             for i in aTester:
                 dimacsClauses2=deepcopy(dimacsClauses)
