@@ -11,13 +11,6 @@ import subprocess
 from copy import deepcopy
 
 
-nbCases=40
-nbVarPCase=13
-nbVar=nbCases*nbVarPCase
-cordeTouve=False
-cibleTouve=False
-costumeTouve=False
-
 
 
 carte = {}

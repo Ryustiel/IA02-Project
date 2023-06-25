@@ -29,6 +29,7 @@ class MazeUncoverer():
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
         self.spam_rotation = 0 # previent les tours complets
+        initialize()#on initialise le fichier cnf
 
     # INTERNAL REP
 
@@ -93,19 +94,19 @@ class MazeUncoverer():
         
         vueGarde=False
         for i in range(-2,0):
-            if carte[self.pos[0]+i]==4:
+            if self.internal[self.pos[0]+i]==4:
                 vueGarde=True
 
         for i in range(1,3):
-            if carte[self.pos[0]+i]==6:
+            if self.internal[self.pos[0]+i]==6:
                 vueGarde=True
 
         for i in range(-2,0):
-            if carte[self.pos[1]+i]==5:
+            if self.internal[self.pos[1]+i]==5:
                 vueGarde=True
 
         for i in range(1,3):
-            if carte[self.pos[1]+i]==3:
+            if self.internal[self.pos[1]+i]==3:
                 vueGarde=True
 
         if vueGarde:
@@ -122,27 +123,25 @@ class MazeUncoverer():
         i=0
         vue=self.getVision()
         if self.orientation==HC.N:
-            while self.pos[1]+i!=vue[1]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
-                carte[pos[0]][pos[1]+i]=HC.EMPTY
+            while self.pos[1]+i!=vue[1]:#tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
                 i+=1
         if self.orientation==HC.S:
-            while self.pos[1]+i!=vue[1]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
-                carte[pos[0]][pos[1]+i]=HC.EMPTY
+            while self.pos[1]+i!=vue[1]:
+                self.internal[pos[0]][pos[1]+i]=HC.EMPTY
                 i-=1
         if self.orientation==HC.E:
-            while self.pos[0]+i!=vue[0]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
-                carte[pos[0]+i][pos[1]]=HC.EMPTY
+            while self.pos[0]+i!=vue[0]:
+                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
                 i+=1
         if self.orientation==HC.W:
-            while self.pos[0]+i!=vue[0]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
-                carte[pos[0]+i][pos[1]]=HC.EMPTY
+            while self.pos[0]+i!=vue[0]:
+                self.internal[pos[0]+i][pos[1]]=HC.EMPTY
                 i-=1
-        carte[vue[0]][vue[1]]=vue[2]
+        self.internal[vue[0]][vue[1]]=vue[2]
         """
         updates the matrix from the status
-        """
-        # récupère la vision et l'intègre à la grille en checkant si ce n'est pas
-        # déjà dedans
+    """
         ...
 
     # GETTERS
