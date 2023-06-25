@@ -38,21 +38,10 @@ def initialize(n,m):
     dimacsClauses.append(clause12)
     dimacsClauses.append(clause13)
     for i in range(nbCases):
-        clause11=[]
-        clause12=[]
-        clause13=[]
-        for j in range(nbCases):
-            if j!= i:
-                clause11.append(-(j*13+11))
-                clause12.append(-(j*13+12))
-                clause13.append(-(j*13+13))
-            else:
-                clause11.append(j*13+11)
-                clause12.append(j*13+12)
-                clause13.append(j*13+13)
-        dimacsClauses.append(clause11)
-        dimacsClauses.append(clause12)
-        dimacsClauses.append(clause13)
+        for j in range(i+1, nbCases): #on ajoute les clauses uniques
+            dimacsClauses.append([-(i*13+11), -(j*13+11)])
+            dimacsClauses.append([-(i*13+12), -(j*13+12)])
+            dimacsClauses.append([-(i*13+13), -(j*13+13)])
 
 def case_to_variable(case, val):
     return val + 13*case[0] + 13*13*case[1]
@@ -130,7 +119,7 @@ def scaner(pos, grille, ecoute):
                     for k in range(3,11):
                         var=case_to_variable((pos[0]+i, pos[1]+j),k)
                         clauseAtLeast.append([var])#il y a au moins une personne dans le champ d'écoute, donc on fait une clause atLeast
-                        if nbPers<5:
+                        if ecoute<5:
                             for l in range(i,3):#on fait les clauses uniques
                                 for m in range(j,3):#pour une unique personne entendue, pour chaque variable, toutes il y a non(cetteVariable) OU non(toute les autres variables)
                                     if (pos[0]+l,pos[1]+m) not in dejaVu:
