@@ -119,9 +119,25 @@ class MazeUncoverer():
         ... # is in guard range ?
 
     def updateFromStatus(self, status):
-        #i=0
-        #if self.orientation==HC.N:
-            #while self.pos[1]+i!=self.getVision()[1]
+        i=0
+        vue=self.getVision()
+        if self.orientation==HC.N:
+            while self.pos[1]+i!=vue[1]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                carte[pos[0]][pos[1]+i]=HC.EMPTY
+                i+=1
+        if self.orientation==HC.S:
+            while self.pos[1]+i!=vue[1]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                carte[pos[0]][pos[1]+i]=HC.EMPTY
+                i-=1
+        if self.orientation==HC.E:
+            while self.pos[0]+i!=vue[0]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                carte[pos[0]+i][pos[1]]=HC.EMPTY
+                i+=1
+        if self.orientation==HC.W:
+            while self.pos[0]+i!=vue[0]:#on tant que l'indice traité n'est pas l'indice de la dernière case vue, on met les cases vues vides à EMPTY
+                carte[pos[0]+i][pos[1]]=HC.EMPTY
+                i-=1
+        carte[vue[0]][vue[1]]=vue[2]
         """
         updates the matrix from the status
         """

@@ -24,13 +24,6 @@ carte = {}
 dimacsClauses=[]
 
 
-# alias de types
-Grid = List[List[int]] 
-PropositionnalVariable = int
-Literal = int
-Clause = List[Literal]
-ClauseBase = List[Clause]
-Model = List[Literal]
 
 
 
@@ -328,7 +321,8 @@ def fini():
         negation[i]=(-modele[i])
     dimacs2= deepcopy(dimacsClauses)
     dimacs2.append(negation)
-    if run_gophersat:
+    dimacs_write("dimacs.cnf", dimacs)
+    if run_gophersat():
         return False
     else:
         return True
