@@ -234,8 +234,8 @@ def initialize():
         dimacsClauses.append(clause12)
         dimacsClauses.append(clause13)
 
-def case_to_variable(case, val) -> PropositionnalVariable:
-    return PropositionnalVariable(1+ val + 13*case[0] + 13*13*case[1] )
+def case_to_variable(case, val):
+    return 1+ val + 13*case[0] + 13*13*case[1]
 """
 def signalCordeTrouve(case):
     cordeTouve=True
