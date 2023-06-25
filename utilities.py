@@ -11,6 +11,17 @@ class AC(Enum):
     COSTUME = 6
     ARME = 7
 
+def generate_phase1_solution(n, m, fill_object):
+    """
+    génère un dictionnaire composé uniquement de 
+    """
+    solution = {}
+    for i in range(n):
+        for j in range(m):
+            solution[(n, m)] = fill_object
+    return solution
+    
+
 def get_ellapsed_string(start_time):
     elapsed_time = time.time() - start_time
     minutes = int(elapsed_time // 60)

@@ -24,7 +24,8 @@ referee = HitmanReferee(world_example, matrix_to_grid(origin, len(knowledge)))
 
 result, ellapsed_time = find_path(knowledge, origin)
 a = affichage(knowledge, matrix_to_grid(origin, len(knowledge)))
-print(a)
-print(origin, result.history)
+#print(a)
+#print(origin, result.history)
 # using result : end_phase1 and check penalties
 #print(penalties)
+
