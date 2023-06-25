@@ -53,8 +53,8 @@ class MazeUncoverer():
                 if i>0 and [i] not in dimacsClauses:
                     case=var_to_case(i)
                     self.internal[case[0]][case[1]]=case[2]
-            return grilleToDico(self.internal)
-        """
+            
+            return False        """
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
         """
