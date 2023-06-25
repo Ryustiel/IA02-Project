@@ -1,9 +1,10 @@
 from testing2.hitman2 import *
 import numpy as np
 from utilities import *
-
+from sat import *
 MAX_VISION = 3 # en nombre de cases
 BLOCKING = [HC.WALL, HC.GUARD_E, HC.GUARD_N, HC.GUARD_S, HC.GUARD_W]
+
 
 class MazeUncoverer():
     """
@@ -73,6 +74,31 @@ class MazeUncoverer():
             return True
         return False
 
+    def ecoute(self):
+        count = 0
+        possible_offset = range(-2, 3)
+        offsets = product(possible_offset, repeat=2)
+        x, y = self.pos
+        for i, j in offsets:
+            pos_x, pos_y = x + i, y + j
+            if pos_x >= self.n or pos_y >= self.m or pos_x < 0 or pos_y < 0:
+                continue
+            if self.world_example[pos_x][pos_y] in [
+                HC.CIVIL_N,
+                HC.CIVIL_E,
+                HC.CIVIL_S,
+                HC.CIVIL_W,
+                HC.GUARD_N,
+                HC.GUARD_E,
+                HC.GUARD_S,
+                HC.GUARD_W,
+            ]:
+                count += 1
+            if count == 5:
+                break
+
+        return count
+
     def getVision(self):
         """
         returns le type de case dans le champ de vision.
@@ -114,30 +140,24 @@ class MazeUncoverer():
         
         vueGarde=False
         for i in range(-2,0):
-            if self.internal[self.pos[0]+i]==4:
+            if world_example[self.pos[0]+i]==4: #on regarde si il y a un garde qui regarde dans notre direction
                 vueGarde=True
 
         for i in range(1,3):
-            if self.internal[self.pos[0]+i]==6:
+            if world_example[self.pos[0]+i]==6:
                 vueGarde=True
 
         for i in range(-2,0):
-            if self.internal[self.pos[1]+i]==5:
+            if world_example[self.pos[1]+i]==5:
                 vueGarde=True
 
         for i in range(1,3):
-            if self.internal[self.pos[1]+i]==3:
+            if world_example[self.pos[1]+i]==3:
                 vueGarde=True
 
         if vueGarde:
             self.penalties+=5
-        """
-        augmente la pénalité en fonction de l'état du joueur :
-        * check si il est vu par un garde
-        * incrémente suite au déplacement
-        """
         self.penalties += 1
-        ... # is in guard range ?
 
     def updateFromStatus(self, status):
         i=0
@@ -162,12 +182,14 @@ class MazeUncoverer():
         """
         updates the matrix from the status
         """
+        scaner(self.pos, self.internal, self.ecoute())
         ...
 
     # GETTERS
 
     def getHistory(self):
         return self.history
+    
 
     def getActions(self):
         """

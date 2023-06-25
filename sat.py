@@ -3,7 +3,7 @@
 author:  Sylvain Lagrue
 version: 1.1.0
 """
-
+from explorer1 import *
 from hitman2 import *
 from typing import List, Tuple
 import os
@@ -11,9 +11,6 @@ import subprocess
 from copy import deepcopy
 
 
-
-
-carte = {}
 dimacsClauses=[]
 
 
@@ -32,7 +29,7 @@ def initialize(n,m):
     clause11=[]
     clause12=[]
     clause13=[]
-    for i in range(nbCases): #on fait les at_least
+    for i in range(nbCases): #on fait les at_least sur les objets uniques (cible, costume, corde)
         var=i*13
         clause11.append(var+11)
         clause12.append(var+12)
@@ -71,71 +68,52 @@ def dimacs_write(filename, dimacs):
     f.close()
 
 def run_gophersat(filename):
-    output = subprocess.run(["/home/osboxes/Documents/IA02/IA02-Project/testing2/gophersat", filename], capture_output=True, check=True, encoding="utf8")
+    output = subprocess.run(["gophersat", filename], capture_output=True, check=True, encoding="utf8")
     string = str(output.stdout)
     lines = string.splitlines()
     if lines[1] != "s SATISFIABLE":
-        #print("not satisFIABLE")
         return False, []
     model = lines[2][2:-2].split(" ")
-    #print("satisFIABLE")
     return True, [int(x) for x in model]
 
 
-def fini():
-    dimacs_write("dimacs.cnf",dimacsClauses)
-    modele=run_gophersat("dimacs.cnf")
-    negation=[]
-    for i in range(len(modele)):
-        negation[i]=(-modele[i])
-    dimacs2= deepcopy(dimacsClauses)
-    dimacs2.append(negation)
-    dimacs_write("dimacs.cnf", dimacs)
-    if run_gophersat():
-        return False
-    else:
-        return True
 
 
 def var_to_case(var):
     typ=var%13-1
     if typ==0:
         typ=13
-    #print(typ)
     case=var-typ
     i=0
     while case%(13*13)!=1:
         i+=1
         case-=13
-    #print(i)
     j=case//(13*13)
-    #print(j)
     return [i, j, t]
 
-def ConnuDansZone(pos):
+def ConnuDansZone(pos,grille):
     dejaVu=[]
     for i in range(-2,3):
         for j in range(-2,3):
-            for k in range(1,14):
-                if [case_to_variable( (pos[0]+i, pos[1]+j), k)] in dimacsClauses:
-                    dejaVu.append((pos[0]+i, pos[1]+j))
+            if grille[pos[0]+i][pos[1]+j)]==HC.UNKNOWN:
+                dejaVu.append((pos[0]+i, pos[1]+j))
     return dejaVu
 
-def PersConnuDansZone(pos):
+def PersConnuDansZone(pos,grille):
     dejaVu=[]
     for i in range(-2,3):
         for j in range(-2,3):
             for k in range(3,11):
-                if [case_to_variable( (pos[0]+i, pos[1]+j), k)] in dimacsClauses:
+                if grille[pos[0]+i][pos[1]+j]==k:
                     dejaVu.append((pos[0]+i, pos[1]+j))
     return dejaVu
 
 
 def scaner(pos, grille, ecoute):
-    dejaVu = ConnuDansZone(pos)#on ne parcours pas les cases dans laquelle on sait déja ce qu'il y a
-    persConnu = PersConnuDansZone(pos)
-    nbPersUnk = nbPers-len(persConnu)
-    if nbPersUnk == 0:
+    dejaVu = ConnuDansZone(pos,grille)#on ne parcours pas les cases dans laquelle on sait déja ce qu'il y a
+    persConnu = PersConnuDansZone(pos,grille)#on regarde le nombre de personnes deja connues dans la zone
+    nbPersUnk = ecoute-len(persConnu)
+    if nbPersUnk == 0: #si il n'y a personne de nouveau dans la pièce, on en déduit que pour toutes les cases inconnues il n'y a personne
         for i in range (-2,3):
             for j in range(-2,3):
                 if (pos[0]+i,pos[1]+j) not in dejaVu:
@@ -143,18 +121,18 @@ def scaner(pos, grille, ecoute):
                         var=case_to_variable((pos[0]+i, pos[1]+j),k)
                         if [-var] not in dimacsClauses:
                             dimacsClauses.append([-var])
-                        #write_dimacs_file("-" +str(cell_to_variable(hitman.pos[0]+i,hitman.pos[1]+j, k) + " 0", "dimacs.cnf"))
+                        
     else:
         clauseAtLeast=[]
         for i in range (-2,3):
-            for j in range(-2,3):
+            for j in range(-2,3):#on parcours toutes les cases inconnues du champ d'écoute
                 if (pos[0]+i,pos[1]+j) not in dejaVu:
                     for k in range(3,11):
                         var=case_to_variable((pos[0]+i, pos[1]+j),k)
-                        clauseAtLeast.append([var])
+                        clauseAtLeast.append([var])#il y a au moins une personne dans le champ d'écoute, donc on fait une clause atLeast
                         if nbPers<5:
                             for l in range(i,3):#on fait les clauses uniques
-                                for m in range(j,3):#pour chaque case, toutes il y a non(cetteCase) OU non(toute les autres cases)
+                                for m in range(j,3):#pour une unique personne entendue, pour chaque variable, toutes il y a non(cetteVariable) OU non(toute les autres variables)
                                     if (pos[0]+l,pos[1]+m) not in dejaVu:
                                         for n in range(k, 11):
                                             if var!=var+13*l+13*13*m+n:
@@ -167,7 +145,7 @@ def scaner(pos, grille, ecoute):
                                                         for m2 in range(m,3):
                                                             if (pos[0]+l2,pos[1]+m2) not in dejaVu:
                                                                 for n2 in range(n, 11):
-                                                                    if var+13*l+13*13*m+n != var+13*l2+13*13*m2+n2:
+                                                                    if var+13*l+13*13*m+n != var+13*l2+13*13*m2+n2: #dans les autres cas, il y a pour chaque variable, non(cette variable) ou non(une autre variable) ou non(encore une autre variable)
                                                                         if nbPersUnk==2:
                                                                             clauseUnique = [-var, -(var+13*l+13*13*m+n), -(var+13*l2+13*13*m2+n2)]
                                                                             if clauseUnique not in dimacs.Clauses:
@@ -198,30 +176,27 @@ def scaner(pos, grille, ecoute):
                 if len(i)>1:
                     for j in i:
                         if abs(j) not in aTester:
-                            aTester.append(abs(j))
+                            aTester.append(abs(j))#pour chaque variable pour laquelle on a une information, on va tester si on peut déduire qu'elle est à VRAI
             for i in aTester:
                 dimacsClauses2=deepcopy(dimacsClauses)
-                dimacsClauses2.append(-i)
+                dimacsClauses2.append(-i)#on créé une autre base de clauses dans laquelle on ajoute la négation de la variable à tester
                 write_dimacs_file("dimacs.cnf", dimacsClauses2)
-                if run_gophersat("dimacs.cnf") == False:
+                if run_gophersat("dimacs.cnf") == False:#si le modèle est insatidfiable, cela signifie que la variable est forcément à VRAI
                     dimacsClauses.append([i])
+                    c=var_to_case(var)
+                    grille[c[0]][c[1]]=c[2]
                     for k in range(0,14):
                         var=i-i%13+k-1
                         if var != i and [-var] not in dimacsClauses:
-                            dimacsClauses.append([-var])
-                            c=var_to_case(var)
-                            carte[(c[0],c[1])] = c[2]
-            if fini():
-                return carte
-            else:
-                return False
+                            dimacsClauses.append([-var])#on met les autres types de cases possibles pour cette case à faux
+                            
 
 
 
 
 #### fonction principale
 
-
+"""
 def main():
     initialize()
 
@@ -231,3 +206,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""
