@@ -49,7 +49,11 @@ class MazeUncoverer():
         if run_gophersat():
             return False
         else:
-            return True
+            for i in modele:
+                if i>0 and [i] not in dimacsClauses:
+                    case=var_to_case(i)
+                    self.internal[case[0]][case[1]]=case[2]
+            return grilleToDico(self.internal)
         """
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
@@ -268,6 +272,7 @@ class MazeUncoverer():
             for j in range self.m:
                 dico[(i,j)]=self.internal[i][j]
         return dico
+
     def perform(self, action):
         if action == AC.HORAIRE:
             if self.orientation == HC.N: self.orientation = HC.E
