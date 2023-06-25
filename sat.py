@@ -329,9 +329,19 @@ def fini():
 
 
 def var_to_case(var):
-    case=[]
-    case[0]=var%13
-    case[1]=
+    typ=var%13-1
+    if typ==0:
+        typ=13
+    #print(typ)
+    case=var-typ
+    i=0
+    while case%(13*13)!=1:
+        i+=1
+        case-=13
+    #print(i)
+    j=case//(13*13)
+    #print(j)
+    return [i, j, t]
 
 def ConnuDansZone(pos):
     dejaVu=[]
@@ -430,12 +440,12 @@ def scaner(pos, grille, ecoute):
                         var=i-i%13+k-1
                         if var != i and [-var] not in dimacsClauses:
                             dimacsClauses.append([-var])
-                            #ajouter au dico case=var_to_case(i)
-                if fini():
-                    return carte
-                else:
-                    return False
-                            #ajouter au dictionnaire
+                            c=var_to_case(var)
+                            carte[(c[0],c[1])] = c[2]
+            if fini():
+                return carte
+            else:
+                return False
 
 """
                                         if nbPers==2:
