@@ -29,19 +29,37 @@ class MazeUncoverer():
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
         self.spam_rotation = 0 # previent les tours complets
+<<<<<<< HEAD
+        initialize(self.n,self.m)#on initialise le fichier cnf
+=======
+>>>>>>> 2e545c32d35ec144e9609a395ed348e2996914fd
 
     # INTERNAL REP
 
     def isDone(self):
+        dimacs_write("dimacs.cnf",dimacsClauses)
+        modele=run_gophersat("dimacs.cnf")
+        negation=[]
+        for i in range(len(modele)):
+            negation[i]=(-modele[i])
+        dimacs2= deepcopy(dimacsClauses)
+        dimacs2.append(negation)
+        dimacs_write("dimacs.cnf", dimacs)
+        if run_gophersat():
+            return False
+        else:
+            return True
         """
         vérifie si toute la grille a été découverte
         returns True if everything has been uncovered
+        """
         """
         test = np.all(self.internal != HC.UNKNOWN)
         if not test:
             # TESTER si les coins sont inatteignables aussi <==<==
             ... # update test here if inatteignables
         return test
+        """
 
     def foundUnknown(self, vision=None):
         """
@@ -143,7 +161,7 @@ class MazeUncoverer():
         self.internal[vue[0]][vue[1]]=vue[2]
         """
         updates the matrix from the status
-    """
+        """
         ...
 
     # GETTERS
