@@ -29,7 +29,6 @@ class MazeUncoverer():
         # HEURISTIQUES
         self.last_rotation = None # previent des rotations successives qui s'annulent
         self.spam_rotation = 0 # previent les tours complets
-        initialize()#on initialise le fichier cnf
 
     # INTERNAL REP
 
